@@ -6,15 +6,16 @@ An arcade pond game built with vanilla HTML5, CSS3, and JavaScript. Rally an ado
 
 ## 🌟 What's New: Skins & Points System
 
-### 🎨 7 Unique Duck Skins
+### 🎨 8 Unique Duck Skins
 Unlock and equip customizable duck skins in the in-game **Duck Wardrobe**:
 1. **Classic Ducky (0 ⭐):** The iconic bright yellow rubber ducky.
 2. **Wild Mallard (150 ⭐):** Glossy emerald green head, white collar ring, and chestnut plumage.
 3. **Cool Shades (300 ⭐):** Equipped with dark sunglasses with reflective glare.
 4. **Pink Flamingo (450 ⭐):** Pastel pink plumage with a black-tipped curved bill.
 5. **Shadow Ninja (600 ⭐):** Stealthy obsidian duck with a red headband and glowing eyes.
-6. **Golden Emperor (800 ⭐):** Radiant golden feathers crowned with a royal ruby jewel and shimmering sparkles.
-7. **Mecha Cyber-Duck (1000 ⭐):** High-tech titanium cyber duck with an electric neon cyan visor.
+6. **Galaxy Scoop (700 ⭐):** Swirling celestial cosmic nebula with twinkling starlight, stardust particle trails, an ethereal shimmer quack, and a blooming lotus flower on its head!
+7. **Golden Emperor (800 ⭐):** Radiant golden feathers crowned with a royal ruby jewel and shimmering sparkles.
+8. **Mecha Cyber-Duck (1000 ⭐):** High-tech titanium cyber duck with an electric neon cyan visor.
 
 Each skin features unique colors, custom accessories, distinct quack audio frequencies/synthesizers, and personalized particle effects!
 

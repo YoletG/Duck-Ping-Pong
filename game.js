@@ -94,6 +94,23 @@
       particleColor: '#495057',
       soundType: 'ninja'
     },
+    galaxy: {
+      id: 'galaxy',
+      name: 'Galaxy Scoop',
+      unlockPoints: 700,
+      description: 'Swirling celestial cosmic nebula with twinkling starlight and a blooming flower on its head.',
+      headGrad: ['#e0aaff', '#7b2cbf', '#10002b'],
+      bodyGrad: ['#9d4edd', '#3c096c', '#03071e'],
+      billColor: '#4cc9f0',
+      wingColor: '#5a189a',
+      eyeColor: '#72efdd',
+      eyeGlow: true,
+      galaxyFlower: true,
+      galaxyStars: true,
+      sparkles: true,
+      particleColor: '#c77dff',
+      soundType: 'galaxy'
+    },
     golden: {
       id: 'golden',
       name: 'Golden Emperor',
@@ -182,6 +199,11 @@
         baseFreq = 480;
         oscType1 = 'sawtooth';
         oscType2 = 'square';
+      } else if (soundType === 'galaxy') {
+        baseFreq = 560;
+        oscType1 = 'sine';
+        oscType2 = 'triangle';
+        filterQ = 2.0;
       }
 
       baseFreq *= Math.min(1.4, Math.max(0.8, speedMultiplier));
@@ -1189,6 +1211,49 @@
     ctx.arc(8, -8, 12, 0, Math.PI * 2);
     ctx.fill();
 
+    if (skin.galaxyStars) {
+      ctx.save();
+      // Cosmic spiral nebula dust on duck body
+      ctx.strokeStyle = 'rgba(199, 125, 255, 0.55)';
+      ctx.lineWidth = 2.4;
+      ctx.lineCap = 'round';
+      ctx.beginPath();
+      ctx.arc(-2, 4, 9, 0.4, Math.PI * 1.3);
+      ctx.stroke();
+
+      ctx.strokeStyle = 'rgba(76, 201, 240, 0.45)';
+      ctx.lineWidth = 1.8;
+      ctx.beginPath();
+      ctx.arc(-2, 4, 5, Math.PI * 0.8, Math.PI * 1.9);
+      ctx.stroke();
+
+      // Twinkling miniature galaxy stars on body & head
+      const drawStar = (sx, sy, size, color = '#ffffff') => {
+        ctx.fillStyle = color;
+        ctx.beginPath();
+        ctx.moveTo(sx, sy - size);
+        ctx.lineTo(sx + size * 0.35, sy - size * 0.35);
+        ctx.lineTo(sx + size, sy);
+        ctx.lineTo(sx + size * 0.35, sy + size * 0.35);
+        ctx.lineTo(sx, sy + size);
+        ctx.lineTo(sx - size * 0.35, sy + size * 0.35);
+        ctx.lineTo(sx - size, sy);
+        ctx.lineTo(sx - size * 0.35, sy - size * 0.35);
+        ctx.closePath();
+        ctx.fill();
+      };
+
+      drawStar(-6, 2, 2.5, '#ffffff');
+      drawStar(3, 8, 2.0, '#72efdd');
+      drawStar(-11, 6, 1.8, '#f72585');
+      drawStar(-1, 10, 1.5, '#ffffff');
+      drawStar(-17, -3, 1.4, '#e0aaff');
+      drawStar(4, -11, 2.0, '#ffffff');
+      drawStar(10, -5, 1.6, '#4cc9f0');
+      drawStar(7, -13, 1.2, '#f72585');
+      ctx.restore();
+    }
+
     if (skin.collar) {
       ctx.fillStyle = '#ffffff';
       ctx.beginPath();
@@ -1196,7 +1261,7 @@
       ctx.fill();
     }
 
-    if (!skin.crown && !skin.headband) {
+    if (!skin.crown && !skin.headband && !skin.galaxyFlower) {
       ctx.fillStyle = skin.headGrad[1];
       ctx.beginPath();
       ctx.moveTo(6, -18);
@@ -1237,6 +1302,59 @@
       ctx.beginPath();
       ctx.arc(7, -20, 2, 0, Math.PI * 2);
       ctx.fill();
+    }
+
+    if (skin.galaxyFlower) {
+      // Blooming celestial flower atop duck's head
+      ctx.save();
+      const fx = 7;
+      const fy = -19;
+
+      // Small leafy base
+      ctx.fillStyle = '#48cae4';
+      ctx.beginPath();
+      ctx.ellipse(fx - 4, fy + 2, 3.5, 1.8, -0.4, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Soft blossom glow
+      ctx.shadowColor = '#ff70a6';
+      ctx.shadowBlur = 5;
+
+      // 5 radiant blooming petals
+      const petalCount = 5;
+      const petalDist = 5.2;
+      for (let i = 0; i < petalCount; i++) {
+        const angle = (i * Math.PI * 2) / petalCount - Math.PI / 2;
+        const px = fx + Math.cos(angle) * petalDist;
+        const py = fy + Math.sin(angle) * petalDist;
+
+        const pGrad = ctx.createRadialGradient(px, py, 1, px, py, 4.5);
+        pGrad.addColorStop(0, '#ffffff');
+        pGrad.addColorStop(0.5, '#ff70a6');
+        pGrad.addColorStop(1, '#c9184a');
+        ctx.fillStyle = pGrad;
+
+        ctx.beginPath();
+        ctx.arc(px, py, 3.2, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      // Golden glowing center core
+      ctx.shadowColor = '#ffe66d';
+      ctx.shadowBlur = 6;
+      ctx.fillStyle = '#ffe66d';
+      ctx.beginPath();
+      ctx.arc(fx, fy, 3.2, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Starlight center highlight
+      ctx.shadowBlur = 0;
+      ctx.fillStyle = '#ffffff';
+      ctx.beginPath();
+      ctx.arc(fx + 0.6, fy - 0.6, 1.2, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.restore();
     }
 
     ctx.fillStyle = skin.billColor;
@@ -1727,7 +1845,10 @@
       }
       if (skin.sparkles && !color) {
         for (let i = 0; i < 4; i++) {
-          this.particles.push(new Particle(x, y, 'sparkle', '#fff3b0'));
+          const sColor = (skin.id === 'galaxy')
+            ? (['#c77dff', '#72efdd', '#ff70a6', '#ffffff'][i % 4])
+            : (skin.particleColor || '#fff3b0');
+          this.particles.push(new Particle(x, y, 'sparkle', sColor));
         }
       }
     }
@@ -1888,7 +2009,10 @@
 
       const skin = this.getSkin();
       if ((skin.sparkles || skin.visor) && Math.random() < 0.25) {
-        this.particles.push(new Particle(this.duck.x, this.duck.y, 'sparkle', skin.particleColor));
+        const pColor = (skin.id === 'galaxy')
+          ? (['#c77dff', '#72efdd', '#ff70a6', '#ffffff'][Math.floor(Math.random() * 4)])
+          : skin.particleColor;
+        this.particles.push(new Particle(this.duck.x, this.duck.y, 'sparkle', pColor));
       }
 
       const topBank = 22;
