@@ -1761,6 +1761,14 @@
     }
 
     initEvents() {
+      // Unlock AudioContext on first user interaction anywhere
+      const unlockAudio = () => {
+        sfx.init();
+      };
+      window.addEventListener('click', unlockAudio, { once: true });
+      window.addEventListener('keydown', unlockAudio, { once: true });
+      window.addEventListener('touchstart', unlockAudio, { once: true });
+
       const updateMousePos = (clientY) => {
         if (this.player.stunTimer > 0) return; // Stunned: paddle frozen!
         const rect = this.canvas.getBoundingClientRect();
