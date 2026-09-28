@@ -2,7 +2,8 @@
  * Duck Ping Pong 🦆🏓
  * A retro arcade pond game where you rally a duck against an AI bot paddle.
  * Includes multiple duck skins, persistent points, margin-based rewards,
- * spinning red Evil Ducks entering from the sides, and zero-scroll arrow controls!
+ * normal friendly ducks & spinning red evil ducks flowing in from the sides,
+ * and zero-scroll arrow controls!
  */
 
 (function () {
@@ -495,32 +496,44 @@
     }
   }
 
-  // --- Evil Duck Class (Red & Spinning, slowly entering from sides) ---
-  class EvilDuck {
-    constructor(side) {
+  // --- Side Duck Class (Enters from sides: Normal yellow ducks & spinning red evil ducks) ---
+  class SideDuck {
+    constructor(side, isEvil = false) {
       this.side = side; // 'left' or 'right'
+      this.isEvil = isEvil;
       this.radius = 18;
       this.x = side === 'left' ? -25 : CANVAS_WIDTH + 25;
       this.y = Math.random() * (CANVAS_HEIGHT - 180) + 90;
 
       // Slowly glides across from the side
-      const baseSpeed = 2.4 + Math.random() * 1.3;
+      const baseSpeed = 2.3 + Math.random() * 1.3;
       this.vx = side === 'left' ? baseSpeed : -baseSpeed;
-      this.vy = (Math.random() - 0.5) * 2.6;
+      this.vy = (Math.random() - 0.5) * 2.4;
 
-      // Rapid spinning animation!
-      this.rotation = Math.random() * Math.PI * 2;
-      this.spinSpeed = (4.0 + Math.random() * 4.0) * (Math.random() < 0.5 ? 1 : -1);
+      this.facingRight = this.vx > 0;
+      this.rotation = isEvil ? Math.random() * Math.PI * 2 : 0;
+      this.spinSpeed = isEvil ? (4.0 + Math.random() * 4.0) * (Math.random() < 0.5 ? 1 : -1) : 0;
       this.wingAngle = 0;
       this.hitFlash = 0;
       this.active = true;
+      this.bobTime = Math.random() * 10;
     }
 
     update(dt) {
       this.x += this.vx * dt * 60;
       this.y += this.vy * dt * 60;
-      this.rotation += this.spinSpeed * dt;
-      this.wingAngle = Math.sin(this.rotation * 4);
+      this.bobTime += dt * 4;
+
+      if (this.isEvil) {
+        // Continuous spinning animation for evil ducks
+        this.rotation += this.spinSpeed * dt;
+        this.wingAngle = Math.sin(this.rotation * 4);
+      } else {
+        // Natural swimming orientation & wing flapping for normal ducks
+        this.facingRight = this.vx > 0;
+        this.rotation = Math.sin(this.bobTime) * 0.08;
+        this.wingAngle = Math.sin(this.bobTime * 2);
+      }
 
       // Bounce off top and bottom pond banks
       const topBank = 22;
@@ -546,100 +559,188 @@
     draw(ctx) {
       ctx.save();
       ctx.translate(this.x, this.y);
-      // Continuous 360-degree spinning!
-      ctx.rotate(this.rotation);
 
-      // Fiery reddish sinister aura
-      ctx.fillStyle = 'rgba(217, 4, 41, 0.3)';
-      ctx.beginPath();
-      ctx.arc(0, 0, this.radius + 6, 0, Math.PI * 2);
-      ctx.fill();
+      if (this.isEvil) {
+        // EVIL DUCK: Continuous 360-degree spinning!
+        ctx.rotate(this.rotation);
 
-      // Deep Red/Crimson Body Gradient
-      const bodyGrad = ctx.createRadialGradient(2, -2, 2, 0, 0, 20);
-      bodyGrad.addColorStop(0, '#ff4d6d');
-      bodyGrad.addColorStop(0.5, '#d90429');
-      bodyGrad.addColorStop(1, '#590d22');
-      ctx.fillStyle = this.hitFlash > 0 ? '#ffffff' : bodyGrad;
-      ctx.beginPath();
-      ctx.ellipse(-2, 4, 16, 12, 0, 0, Math.PI * 2);
-      ctx.fill();
+        // Fiery reddish sinister aura
+        ctx.fillStyle = 'rgba(217, 4, 41, 0.3)';
+        ctx.beginPath();
+        ctx.arc(0, 0, this.radius + 6, 0, Math.PI * 2);
+        ctx.fill();
 
-      // Spiky fiery dark tail
-      ctx.fillStyle = '#800f2f';
-      ctx.beginPath();
-      ctx.moveTo(-14, 2);
-      ctx.lineTo(-24, -4);
-      ctx.lineTo(-17, 0);
-      ctx.lineTo(-26, 4);
-      ctx.lineTo(-14, 6);
-      ctx.closePath();
-      ctx.fill();
+        // Deep Red/Crimson Body Gradient
+        const bodyGrad = ctx.createRadialGradient(2, -2, 2, 0, 0, 20);
+        bodyGrad.addColorStop(0, '#ff4d6d');
+        bodyGrad.addColorStop(0.5, '#d90429');
+        bodyGrad.addColorStop(1, '#590d22');
+        ctx.fillStyle = this.hitFlash > 0 ? '#ffffff' : bodyGrad;
+        ctx.beginPath();
+        ctx.ellipse(-2, 4, 16, 12, 0, 0, Math.PI * 2);
+        ctx.fill();
 
-      // Wing (dark red/crimson)
-      ctx.save();
-      ctx.translate(-4, 2);
-      ctx.rotate(this.wingAngle * 0.35);
-      ctx.fillStyle = '#590d22';
-      ctx.beginPath();
-      ctx.ellipse(0, 0, 9, 5, 0.2, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.restore();
+        // Spiky fiery dark tail
+        ctx.fillStyle = '#800f2f';
+        ctx.beginPath();
+        ctx.moveTo(-14, 2);
+        ctx.lineTo(-24, -4);
+        ctx.lineTo(-17, 0);
+        ctx.lineTo(-26, 4);
+        ctx.lineTo(-14, 6);
+        ctx.closePath();
+        ctx.fill();
 
-      // Evil Duck Head
-      const headGrad = ctx.createRadialGradient(7, -6, 2, 6, -5, 13);
-      headGrad.addColorStop(0, '#ff758f');
-      headGrad.addColorStop(0.6, '#d90429');
-      headGrad.addColorStop(1, '#370617');
-      ctx.fillStyle = this.hitFlash > 0 ? '#ffffff' : headGrad;
-      ctx.beginPath();
-      ctx.arc(7, -7, 11, 0, Math.PI * 2);
-      ctx.fill();
+        // Wing (dark red/crimson)
+        ctx.save();
+        ctx.translate(-4, 2);
+        ctx.rotate(this.wingAngle * 0.35);
+        ctx.fillStyle = '#590d22';
+        ctx.beginPath();
+        ctx.ellipse(0, 0, 9, 5, 0.2, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
 
-      // Evil Horns / Fiery Spikes on Head
-      ctx.fillStyle = '#ffb703';
-      ctx.beginPath();
-      ctx.moveTo(3, -16);
-      ctx.lineTo(6, -25);
-      ctx.lineTo(9, -17);
-      ctx.closePath();
-      ctx.fill();
+        // Evil Duck Head
+        const headGrad = ctx.createRadialGradient(7, -6, 2, 6, -5, 13);
+        headGrad.addColorStop(0, '#ff758f');
+        headGrad.addColorStop(0.6, '#d90429');
+        headGrad.addColorStop(1, '#370617');
+        ctx.fillStyle = this.hitFlash > 0 ? '#ffffff' : headGrad;
+        ctx.beginPath();
+        ctx.arc(7, -7, 11, 0, Math.PI * 2);
+        ctx.fill();
 
-      ctx.beginPath();
-      ctx.moveTo(8, -16);
-      ctx.lineTo(13, -23);
-      ctx.lineTo(14, -15);
-      ctx.closePath();
-      ctx.fill();
+        // Evil Horns / Fiery Spikes on Head
+        ctx.fillStyle = '#ffb703';
+        ctx.beginPath();
+        ctx.moveTo(3, -16);
+        ctx.lineTo(6, -25);
+        ctx.lineTo(9, -17);
+        ctx.closePath();
+        ctx.fill();
 
-      // Sharp Dark Beak
-      ctx.fillStyle = '#1b1b1e';
-      ctx.beginPath();
-      ctx.moveTo(14, -8);
-      ctx.lineTo(26, -5);
-      ctx.lineTo(24, -1);
-      ctx.lineTo(13, -3);
-      ctx.closePath();
-      ctx.fill();
-      ctx.strokeStyle = '#ef233c';
-      ctx.lineWidth = 1;
-      ctx.stroke();
+        ctx.beginPath();
+        ctx.moveTo(8, -16);
+        ctx.lineTo(13, -23);
+        ctx.lineTo(14, -15);
+        ctx.closePath();
+        ctx.fill();
 
-      // Sinister Slanted Evil Eye
-      ctx.fillStyle = '#ffea00';
-      ctx.beginPath();
-      ctx.moveTo(8, -12);
-      ctx.lineTo(14, -9);
-      ctx.lineTo(13, -6);
-      ctx.lineTo(7, -9);
-      ctx.closePath();
-      ctx.fill();
+        // Sharp Dark Beak
+        ctx.fillStyle = '#1b1b1e';
+        ctx.beginPath();
+        ctx.moveTo(14, -8);
+        ctx.lineTo(26, -5);
+        ctx.lineTo(24, -1);
+        ctx.lineTo(13, -3);
+        ctx.closePath();
+        ctx.fill();
+        ctx.strokeStyle = '#ef233c';
+        ctx.lineWidth = 1;
+        ctx.stroke();
 
-      // Red slit pupil
-      ctx.fillStyle = '#d90429';
-      ctx.beginPath();
-      ctx.arc(11, -8.5, 1.5, 0, Math.PI * 2);
-      ctx.fill();
+        // Sinister Slanted Evil Eye
+        ctx.fillStyle = '#ffea00';
+        ctx.beginPath();
+        ctx.moveTo(8, -12);
+        ctx.lineTo(14, -9);
+        ctx.lineTo(13, -6);
+        ctx.lineTo(7, -9);
+        ctx.closePath();
+        ctx.fill();
+
+        // Red slit pupil
+        ctx.fillStyle = '#d90429';
+        ctx.beginPath();
+        ctx.arc(11, -8.5, 1.5, 0, Math.PI * 2);
+        ctx.fill();
+      } else {
+        // NORMAL DUCK: Peaceful, smiling yellow ducky!
+        if (!this.facingRight) {
+          ctx.scale(-1, 1);
+        }
+        ctx.rotate(this.rotation);
+
+        // Water ripple beneath duck
+        ctx.fillStyle = 'rgba(224, 247, 250, 0.35)';
+        ctx.beginPath();
+        ctx.ellipse(0, 14, 18, 5, 0, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Plump Sunny Yellow Body Gradient
+        const bodyGrad = ctx.createRadialGradient(2, -2, 3, 0, 2, 18);
+        bodyGrad.addColorStop(0, '#ffe066');
+        bodyGrad.addColorStop(0.7, '#ffbe0b');
+        bodyGrad.addColorStop(1, '#fb8500');
+        ctx.fillStyle = this.hitFlash > 0 ? '#ffffff' : bodyGrad;
+        ctx.beginPath();
+        ctx.ellipse(-2, 3, 15, 11, 0, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Cute upturned tail feather
+        ctx.beginPath();
+        ctx.moveTo(-13, 2);
+        ctx.quadraticCurveTo(-20, -2, -18, -8);
+        ctx.quadraticCurveTo(-12, -3, -8, 0);
+        ctx.closePath();
+        ctx.fill();
+
+        // Flapping Orange Wing
+        ctx.save();
+        ctx.translate(-3, 1);
+        ctx.rotate(this.wingAngle * 0.28);
+        ctx.fillStyle = '#f77f00';
+        ctx.beginPath();
+        ctx.ellipse(0, 0, 8, 5, 0.2, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+
+        // Round Yellow Head
+        const headGrad = ctx.createRadialGradient(7, -6, 2, 6, -5, 12);
+        headGrad.addColorStop(0, '#fff3b0');
+        headGrad.addColorStop(0.8, '#ffbe0b');
+        headGrad.addColorStop(1, '#fb8500');
+        ctx.fillStyle = this.hitFlash > 0 ? '#ffffff' : headGrad;
+        ctx.beginPath();
+        ctx.arc(6, -6, 10, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Cute tuft feather on top
+        ctx.fillStyle = '#ffbe0b';
+        ctx.beginPath();
+        ctx.moveTo(5, -15);
+        ctx.quadraticCurveTo(7, -19, 9, -17);
+        ctx.quadraticCurveTo(8, -15, 7, -15);
+        ctx.fill();
+
+        // Friendly Orange Bill
+        ctx.fillStyle = '#ff5400';
+        ctx.beginPath();
+        ctx.moveTo(13, -7);
+        ctx.quadraticCurveTo(23, -4, 20, -1);
+        ctx.quadraticCurveTo(15, 0, 12, -3);
+        ctx.closePath();
+        ctx.fill();
+
+        // Big friendly cartoon eye
+        ctx.fillStyle = '#ffffff';
+        ctx.beginPath();
+        ctx.arc(9, -8, 3.5, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Pupil
+        ctx.fillStyle = '#111111';
+        ctx.beginPath();
+        ctx.arc(10, -8, 1.8, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Sparkle
+        ctx.fillStyle = '#ffffff';
+        ctx.beginPath();
+        ctx.arc(10.8, -8.8, 0.8, 0, Math.PI * 2);
+        ctx.fill();
+      }
 
       ctx.restore();
     }
@@ -864,6 +965,7 @@
       this.skinsBtn = document.getElementById('skinsBtn');
       this.skinUnlockedCountEl = document.getElementById('skinUnlockedCount');
       this.activeSkinNameEl = document.getElementById('activeSkinName');
+      this.normalDuckCountEl = document.getElementById('normalDuckCount');
       this.evilDuckCountEl = document.getElementById('evilDuckCount');
 
       // Overlay Elements
@@ -897,9 +999,9 @@
 
       // Objects
       this.particles = [];
-      this.evilDucks = [];
-      this.evilSpawnTimer = 0;
-      this.nextEvilSpawnDelay = 4.0;
+      this.sideDucks = [];
+      this.sideSpawnTimer = 0;
+      this.nextSideSpawnDelay = 4.0;
       this.time = 0;
 
       // Player Paddle
@@ -1239,9 +1341,11 @@
       this.rallyCountEl.textContent = '0';
       this.spawnWaterSplash(this.duck.x, this.duck.y, 8);
 
-      // Reset evil duck timers for the new rally
-      this.evilSpawnTimer = 0;
-      this.nextEvilSpawnDelay = 3.5;
+      // Reset side ducks timers for the new rally
+      this.sideDucks = [];
+      this.sideSpawnTimer = 0;
+      this.nextSideSpawnDelay = 3.5;
+      this.updateScoreboard();
     }
 
     spawnWaterSplash(x, y, count = 6) {
@@ -1272,8 +1376,12 @@
       this.playerScoreEl.textContent = this.playerScore;
       this.botScoreEl.textContent = this.botScore;
       this.rallyCountEl.textContent = this.rally;
-      if (this.evilDuckCountEl) {
-        this.evilDuckCountEl.textContent = `${this.evilDucks.length} Evil`;
+
+      if (this.normalDuckCountEl && this.evilDuckCountEl) {
+        const normalCount = this.sideDucks.filter(d => !d.isEvil).length;
+        const evilCount = this.sideDucks.filter(d => d.isEvil).length;
+        this.normalDuckCountEl.textContent = normalCount;
+        this.evilDuckCountEl.textContent = evilCount;
       }
     }
 
@@ -1340,8 +1448,8 @@
         this.actionBtn.textContent = 'Play Again';
         this.overlay.classList.remove('hidden');
 
-        // Clear evil ducks on match end
-        this.evilDucks = [];
+        // Clear side ducks on match end
+        this.sideDucks = [];
         this.updateScoreboard();
         return true;
       }
@@ -1458,129 +1566,183 @@
         this.handlePaddleHit(this.bot, -1);
       }
 
-      // 5. EVIL DUCKS: Spawn slowly from the sides!
-      this.evilSpawnTimer += dt;
-      if (this.evilSpawnTimer >= this.nextEvilSpawnDelay && this.evilDucks.length < 4) {
-        this.evilSpawnTimer = 0;
-        this.nextEvilSpawnDelay = 5.0 + Math.random() * 3.5; // Next duck in 5-8.5 seconds
+      // 5. SIDE DUCKS: Spawn slowly from the sides (both normal and evil ducks!)
+      this.sideSpawnTimer += dt;
+      if (this.sideSpawnTimer >= this.nextSideSpawnDelay && this.sideDucks.length < 5) {
+        this.sideSpawnTimer = 0;
+        this.nextSideSpawnDelay = 4.5 + Math.random() * 3.5; // Next duck in 4.5 - 8 seconds
         const side = Math.random() < 0.5 ? 'left' : 'right';
-        const evil = new EvilDuck(side);
-        this.evilDucks.push(evil);
-        sfx.playEvilEntrance();
-        this.spawnWaterSplash(evil.x, evil.y, 6);
+        // 50% chance of Normal friendly duck, 50% chance of Spinning Evil duck!
+        const isEvil = Math.random() < 0.5;
+        const newSideDuck = new SideDuck(side, isEvil);
+        this.sideDucks.push(newSideDuck);
+
+        if (isEvil) {
+          sfx.playEvilEntrance();
+        } else {
+          sfx.playQuack(1.1, 'classic');
+        }
+        this.spawnWaterSplash(newSideDuck.x, newSideDuck.y, 6);
         this.updateScoreboard();
       }
 
-      // 6. EVIL DUCKS: Update, Collisions & Interactions
-      for (let i = 0; i < this.evilDucks.length; i++) {
-        const evil = this.evilDucks[i];
-        evil.update(dt);
+      // 6. SIDE DUCKS: Update, Collisions & Interactions
+      for (let i = 0; i < this.sideDucks.length; i++) {
+        const duck = this.sideDucks[i];
+        duck.update(dt);
 
-        // Small red smoke trail
-        if (Math.random() < 0.25) {
-          this.particles.push(new Particle(evil.x, evil.y, 'sparkle', '#ef233c'));
+        // Particle trail
+        if (Math.random() < 0.22) {
+          this.particles.push(new Particle(duck.x, duck.y, 'sparkle', duck.isEvil ? '#ef233c' : '#ffd166'));
         }
 
-        // A. Evil Duck vs Player Paddle
+        // A. Side Duck vs Player Paddle
         if (
-          evil.vx < 0 &&
-          evil.x - evil.radius <= pRight &&
-          evil.x + evil.radius >= this.player.x &&
-          evil.y >= pTop - 10 &&
-          evil.y <= pBottom + 10
+          duck.vx < 0 &&
+          duck.x - duck.radius <= pRight &&
+          duck.x + duck.radius >= this.player.x &&
+          duck.y >= pTop - 10 &&
+          duck.y <= pBottom + 10
         ) {
-          // Deflect evil duck back toward bot side!
-          evil.vx = Math.abs(evil.vx) * 1.1 + 0.4;
-          const hitOffset = (evil.y - (this.player.y + this.player.height / 2)) / (this.player.height / 2);
-          evil.vy += hitOffset * 2.5;
-          evil.hitFlash = 1.0;
+          duck.vx = Math.abs(duck.vx) * 1.1 + 0.4;
+          const hitOffset = (duck.y - (this.player.y + this.player.height / 2)) / (this.player.height / 2);
+          duck.vy += hitOffset * 2.5;
+          duck.hitFlash = 1.0;
           this.player.hitFlash = 1.0;
 
           sfx.playPaddleHit();
-          sfx.playEvilQuack();
-          this.triggerQuackWave(evil.x, evil.y, '#ef233c');
-          this.spawnFeathers(evil.x, evil.y, 4, '#ef233c');
+          if (duck.isEvil) {
+            sfx.playEvilQuack();
+            this.triggerQuackWave(duck.x, duck.y, '#ef233c');
+            this.spawnFeathers(duck.x, duck.y, 4, '#ef233c');
+          } else {
+            sfx.playQuack(1.0, 'classic');
+            this.triggerQuackWave(duck.x, duck.y, '#ffd166');
+            this.spawnFeathers(duck.x, duck.y, 4, '#ffbe0b');
+          }
 
-          // Deflection bonus points!
+          // Bonus points for hitting side ducks!
           this.points += 5;
           this.updatePointsUI(5);
         }
 
-        // B. Evil Duck vs Bot Paddle
+        // B. Side Duck vs Bot Paddle
         if (
-          evil.vx > 0 &&
-          evil.x + evil.radius >= bLeft &&
-          evil.x - evil.radius <= bLeft + this.bot.width &&
-          evil.y >= bTop - 10 &&
-          evil.y <= bBottom + 10
+          duck.vx > 0 &&
+          duck.x + duck.radius >= bLeft &&
+          duck.x - duck.radius <= bLeft + this.bot.width &&
+          duck.y >= bTop - 10 &&
+          duck.y <= bBottom + 10
         ) {
-          // Bot deflects evil duck back!
-          evil.vx = -Math.abs(evil.vx) * 1.1 - 0.4;
-          const hitOffset = (evil.y - (this.bot.y + this.bot.height / 2)) / (this.bot.height / 2);
-          evil.vy += hitOffset * 2.5;
-          evil.hitFlash = 1.0;
+          duck.vx = -Math.abs(duck.vx) * 1.1 - 0.4;
+          const hitOffset = (duck.y - (this.bot.y + this.bot.height / 2)) / (this.bot.height / 2);
+          duck.vy += hitOffset * 2.5;
+          duck.hitFlash = 1.0;
           this.bot.hitFlash = 1.0;
 
           sfx.playPaddleHit();
-          sfx.playEvilQuack();
-          this.spawnFeathers(evil.x, evil.y, 4, '#ef233c');
+          if (duck.isEvil) {
+            sfx.playEvilQuack();
+            this.spawnFeathers(duck.x, duck.y, 4, '#ef233c');
+          } else {
+            sfx.playQuack(1.0, 'classic');
+            this.spawnFeathers(duck.x, duck.y, 4, '#ffbe0b');
+          }
         }
 
-        // C. Evil Duck vs Main Duck Mid-Air Collision!
-        const dx = this.duck.x - evil.x;
-        const dy = this.duck.y - evil.y;
+        // C. Side Duck vs Main Duck Mid-Air Collision!
+        const dx = this.duck.x - duck.x;
+        const dy = this.duck.y - duck.y;
         const dist = Math.hypot(dx, dy);
-        const minDist = this.duck.radius + evil.radius;
+        const minDist = this.duck.radius + duck.radius;
 
         if (dist < minDist && dist > 0) {
           const nx = dx / dist;
           const ny = dy / dist;
 
-          // Push apart to prevent overlap
           const overlap = minDist - dist;
           this.duck.x += nx * overlap * 0.5;
           this.duck.y += ny * overlap * 0.5;
-          evil.x -= nx * overlap * 0.5;
-          evil.y -= ny * overlap * 0.5;
+          duck.x -= nx * overlap * 0.5;
+          duck.y -= ny * overlap * 0.5;
 
-          // Elastic bounce swap
-          const kx = this.duck.vx - evil.vx;
-          const ky = this.duck.vy - evil.vy;
+          const kx = this.duck.vx - duck.vx;
+          const ky = this.duck.vy - duck.vy;
           const p = 2 * (nx * kx + ny * ky) / 2;
 
           this.duck.vx -= p * nx * 0.85;
           this.duck.vy -= p * ny * 0.85;
-          evil.vx += p * nx * 0.85;
-          evil.vy += p * ny * 0.85;
+          duck.vx += p * nx * 0.85;
+          duck.vy += p * ny * 0.85;
 
           this.duck.facingRight = this.duck.vx > 0;
-          evil.hitFlash = 1.0;
+          duck.hitFlash = 1.0;
           this.duck.squishX = 0.7;
           this.duck.squishY = 1.3;
 
           sfx.playPaddleHit();
-          sfx.playEvilQuack();
-          sfx.playQuack(1.0, this.getSkin().soundType);
-          this.triggerQuackWave(this.duck.x, this.duck.y, '#ffd166');
-          this.triggerQuackWave(evil.x, evil.y, '#ef233c');
-          this.spawnFeathers(evil.x, evil.y, 5, '#ef233c');
+          if (duck.isEvil) {
+            sfx.playEvilQuack();
+            sfx.playQuack(1.0, this.getSkin().soundType);
+            this.triggerQuackWave(this.duck.x, this.duck.y, '#ffd166');
+            this.triggerQuackWave(duck.x, duck.y, '#ef233c');
+            this.spawnFeathers(duck.x, duck.y, 5, '#ef233c');
+          } else {
+            sfx.playQuack(1.0, 'classic');
+            sfx.playQuack(1.1, this.getSkin().soundType);
+            this.triggerQuackWave(this.duck.x, this.duck.y, '#ffd166');
+            this.spawnFeathers(duck.x, duck.y, 5, '#ffbe0b');
+          }
         }
 
-        // D. Out of bounds check: if hit past bot, award banish bonus!
-        if (evil.x > CANVAS_WIDTH + 45) {
+        // D. Side Duck vs Side Duck Collision!
+        for (let j = i + 1; j < this.sideDucks.length; j++) {
+          const other = this.sideDucks[j];
+          const sdx = other.x - duck.x;
+          const sdy = other.y - duck.y;
+          const sdist = Math.hypot(sdx, sdy);
+          const sMinDist = duck.radius + other.radius;
+
+          if (sdist < sMinDist && sdist > 0) {
+            const snx = sdx / sdist;
+            const sny = sdy / sdist;
+            const soverlap = sMinDist - sdist;
+            duck.x -= snx * soverlap * 0.5;
+            duck.y -= sny * soverlap * 0.5;
+            other.x += snx * soverlap * 0.5;
+            other.y += sny * soverlap * 0.5;
+
+            const skx = duck.vx - other.vx;
+            const sky = duck.vy - other.vy;
+            const sp = 2 * (snx * skx + sny * sky) / 2;
+            duck.vx -= sp * snx * 0.85;
+            duck.vy -= sp * sny * 0.85;
+            other.vx += sp * snx * 0.85;
+            other.vy += sp * sny * 0.85;
+
+            duck.hitFlash = 0.8;
+            other.hitFlash = 0.8;
+            sfx.playBounce();
+            this.spawnFeathers(duck.x, duck.y, 3, duck.isEvil ? '#ef233c' : '#ffbe0b');
+            this.spawnFeathers(other.x, other.y, 3, other.isEvil ? '#ef233c' : '#ffbe0b');
+          }
+        }
+
+        // E. Out of bounds: crossing past bot awards banish / rescue bonus!
+        if (duck.x > CANVAS_WIDTH + 45) {
           this.points += 15;
           this.updatePointsUI(15);
-          this.spawnFeathers(CANVAS_WIDTH, evil.y, 6, '#ffd700');
-          evil.active = false;
-        } else if (evil.x < -45) {
-          evil.active = false;
+          this.spawnFeathers(CANVAS_WIDTH, duck.y, 6, duck.isEvil ? '#ffd700' : '#48cae4');
+          duck.active = false;
+        } else if (duck.x < -45) {
+          duck.active = false;
         }
       }
 
-      // Remove inactive evil ducks
-      const prevCount = this.evilDucks.length;
-      this.evilDucks = this.evilDucks.filter(e => e.active);
-      if (prevCount !== this.evilDucks.length) {
+      // Remove inactive side ducks
+      const prevCount = this.sideDucks.length;
+      this.sideDucks = this.sideDucks.filter(e => e.active);
+      if (prevCount !== this.sideDucks.length) {
         this.updateScoreboard();
       }
 
@@ -1654,7 +1816,7 @@
       this.drawCenterNet(ctx);
       this.drawParticles(ctx);
       this.drawPaddles(ctx);
-      this.drawEvilDucks(ctx);
+      this.drawSideDucks(ctx);
       this.drawCurrentDuck(ctx);
     }
 
@@ -1789,9 +1951,9 @@
       drawSinglePaddle(this.bot, false);
     }
 
-    drawEvilDucks(ctx) {
-      for (let i = 0; i < this.evilDucks.length; i++) {
-        this.evilDucks[i].draw(ctx);
+    drawSideDucks(ctx) {
+      for (let i = 0; i < this.sideDucks.length; i++) {
+        this.sideDucks[i].draw(ctx);
       }
     }
 

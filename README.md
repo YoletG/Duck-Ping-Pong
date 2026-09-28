@@ -20,12 +20,19 @@ Each skin features unique colors, custom accessories, distinct quack audio frequ
 
 ---
 
-### 😈 Spinning Red Evil Ducks (Hazard & Bonus System)
-Watch out! As rallies unfold, **fiery crimson Evil Ducks** slowly enter the pond from the left and right sides:
-- **Continuous 360° Spin:** They spin as they glide across the pond, bouncing off top and bottom water banks!
-- **Paddle Deflection:** You can strike evil ducks with your paddle to deflect them toward the bot side (`+5 ⭐ Deflection Bonus`)!
-- **Mid-Air Duck Collisions:** If the main duck collides with a spinning evil duck in mid-air, both bounce violently off each other in an explosion of red and yellow feathers!
-- **Banish Bonus:** Knocking an evil duck past the bot paddle awards a `+15 ⭐ Evil Banish Bonus`!
+### 🦆 & 😈 Side-Entering Ducks (Normal & Evil Ducks)
+As rallies unfold, ducks slowly flow into the pond from the left and right sides:
+- **🦆 Normal Ducks:**
+  - Cute sunny yellow ducks that swim peacefully across the pond, flapping their wings and bobbing naturally with water ripples.
+  - Can be rallied by your paddle (`+5 ⭐ Duck Saved!`) with cheerful quacks and golden feather bursts!
+  - Deflecting a normal duck past the bot paddle awards a **`+15 ⭐ Rescue Bonus`**!
+  - Can bump harmlessly into other ducks with playful quacks and splashes.
+- **😈 Spinning Red Evil Ducks:**
+  - Fiery crimson ducks with spiky horns and sinister glowing eyes that **continuously spin 360°** across the pond!
+  - Strike them with your paddle to deflect them back toward the bot (`+5 ⭐ Deflection Bonus`)!
+  - Colliding mid-air with other ducks triggers an explosion of red feathers and shockwaves!
+  - Knocking an evil duck past the bot paddle awards a **`+15 ⭐ Evil Banish Bonus`**!
+- **HUD Tracker:** Live counter displays the number of active normal and evil ducks in the pond (`🦆 X · 😈 Y`).
 
 ---
 
