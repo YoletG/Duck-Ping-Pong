@@ -22,7 +22,7 @@ Each skin features unique colors, custom accessories, distinct quack audio frequ
 ---
 
 ### 🦆 & 😈 Side-Entering Duck Flood (Normal & Evil Ducks)
-As rallies unfold, ducks **flood in continuously** from both sides in rapid streams (spawning in waves of 1–3 ducks up to 18 on screen simultaneously!):
+As rallies unfold, ducks **flood in continuously** from both sides in rapid streams (spawning in waves of 1–3 ducks up to 14 on screen simultaneously!):
 - **🦆 Normal Ducks:**
   - Cute sunny yellow ducks that swim peacefully across the pond, flapping their wings and bobbing naturally with water ripples.
   - Can be rallied by your paddle (`+5 ⭐ Duck Saved!`) with cheerful quacks and golden feather bursts!

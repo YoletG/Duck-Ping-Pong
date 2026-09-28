@@ -21,7 +21,7 @@
   const PADDLE_WIDTH = 18;
   const PADDLE_HEIGHT = 100;
   const PADDLE_INSET = 35;
-  const MAX_SIDE_DUCKS = 18;
+  const MAX_SIDE_DUCKS = 14;
 
   // --- Duck Skins Catalog ---
   const SKINS = {
@@ -1584,7 +1584,7 @@
       this.particles = [];
       this.sideDucks = [];
       this.sideSpawnTimer = 0;
-      this.nextSideSpawnDelay = 0.8;
+      this.nextSideSpawnDelay = 1.0;
       this.lastSideEntranceSound = 0;
 
       // Tuxedo Duck & Escort System (strictly 1 at a time!)
@@ -1972,14 +1972,14 @@
       this.spawnWaterSplash(this.duck.x, this.duck.y, 8);
 
       // Maintain duck flood across serves (keep existing ducks and flood in a new wave!)
-      if (this.sideDucks.length > 10) {
-        this.sideDucks = this.sideDucks.slice(-10);
+      if (this.sideDucks.length > 8) {
+        this.sideDucks = this.sideDucks.slice(-8);
       }
       this.sideSpawnTimer = 0;
-      this.nextSideSpawnDelay = 0.6;
+      this.nextSideSpawnDelay = 0.8;
 
-      // Flood in a starting wave of ducks on serve
-      const initialSurge = Math.min(3, MAX_SIDE_DUCKS - this.sideDucks.length);
+      // Flood in a starting wave of ducks on serve (adjusted 20% pacing)
+      const initialSurge = Math.min(2, MAX_SIDE_DUCKS - this.sideDucks.length);
       for (let w = 0; w < initialSurge; w++) {
         const side = Math.random() < 0.5 ? 'left' : 'right';
         const isEvil = Math.random() < 0.15;
@@ -2244,11 +2244,11 @@
       this.sideSpawnTimer += dt;
       if (this.sideSpawnTimer >= this.nextSideSpawnDelay && this.sideDucks.length < MAX_SIDE_DUCKS) {
         this.sideSpawnTimer = 0;
-        // Rapid cadence (every 0.7s to 1.5s) for a true duck flood!
-        this.nextSideSpawnDelay = 0.7 + Math.random() * 0.8;
+        // Paced cadence (every 0.9s to 1.8s) with 20% fewer ducks flooding in
+        this.nextSideSpawnDelay = 0.9 + Math.random() * 0.9;
 
-        // Flood in: spawn 1 to 3 ducks in rapid waves
-        const waveCount = Math.random() < 0.5 ? 2 : (Math.random() < 0.2 ? 3 : 1);
+        // Flood in: spawn 1 to 2 ducks (rarely 3) in balanced waves (20% reduction)
+        const waveCount = Math.random() < 0.38 ? 2 : (Math.random() < 0.08 ? 3 : 1);
         let spawnedAny = false;
         let hasEvil = false;
 
