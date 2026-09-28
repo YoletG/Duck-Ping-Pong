@@ -355,6 +355,31 @@
       osc.stop(now + 0.42);
     }
 
+    // Electric zap / shock sound for stunned paddle
+    playZap() {
+      if (this.muted) return;
+      this.init();
+      if (!this.ctx) return;
+
+      const now = this.ctx.currentTime;
+      const osc = this.ctx.createOscillator();
+      const gain = this.ctx.createGain();
+      osc.type = 'sawtooth';
+      osc.frequency.setValueAtTime(240, now);
+      osc.frequency.linearRampToValueAtTime(75, now + 0.08);
+      osc.frequency.linearRampToValueAtTime(320, now + 0.16);
+      osc.frequency.linearRampToValueAtTime(60, now + 0.28);
+
+      gain.gain.setValueAtTime(0.01, now);
+      gain.gain.linearRampToValueAtTime(0.3, now + 0.04);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.3);
+
+      osc.connect(gain);
+      gain.connect(this.ctx.destination);
+      osc.start(now);
+      osc.stop(now + 0.32);
+    }
+
     playPaddleHit() {
       if (this.muted) return;
       this.init();
@@ -512,6 +537,11 @@
         this.vy = (Math.random() - 0.5) * 2.5;
         this.decay = 0.04 + Math.random() * 0.03;
         this.size = 3 + Math.random() * 4;
+      } else if (type === 'zap') {
+        this.vx = (Math.random() - 0.5) * 5.5;
+        this.vy = (Math.random() - 0.5) * 5.5;
+        this.decay = 0.06 + Math.random() * 0.04;
+        this.size = 2 + Math.random() * 3;
       } else {
         // Water droplet
         this.vx = (Math.random() - 0.5) * 4;
@@ -566,6 +596,17 @@
         ctx.beginPath();
         ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
         ctx.fill();
+      } else if (this.type === 'zap') {
+        ctx.globalAlpha = Math.max(0, this.life);
+        ctx.strokeStyle = this.color;
+        ctx.lineWidth = 2;
+        ctx.shadowColor = this.color;
+        ctx.shadowBlur = 8;
+        ctx.beginPath();
+        ctx.moveTo(this.x, this.y);
+        ctx.lineTo(this.x + (Math.random() - 0.5) * 14, this.y + (Math.random() - 0.5) * 14);
+        ctx.stroke();
+        ctx.shadowBlur = 0;
       } else {
         ctx.globalAlpha = Math.max(0, this.life * 0.6);
         ctx.fillStyle = '#e0f7fa';
@@ -1562,7 +1603,8 @@
         height: PADDLE_HEIGHT,
         targetY: CANVAS_HEIGHT / 2 - PADDLE_HEIGHT / 2,
         color: '#e63946',
-        hitFlash: 0
+        hitFlash: 0,
+        stunTimer: 0
       };
 
       // Bot Paddle
@@ -1573,7 +1615,8 @@
         height: PADDLE_HEIGHT,
         speed: 6.8,
         color: '#3a86ff',
-        hitFlash: 0
+        hitFlash: 0,
+        stunTimer: 0
       };
 
       // Main Duck (The duck you play the game with!)
@@ -1661,6 +1704,7 @@
 
     initEvents() {
       const updateMousePos = (clientY) => {
+        if (this.player.stunTimer > 0) return; // Stunned: paddle frozen!
         const rect = this.canvas.getBoundingClientRect();
         const scaleY = this.canvas.height / rect.height;
         const relativeY = (clientY - rect.top) * scaleY;
@@ -1856,7 +1900,9 @@
       this.particles = [];
       this.player.y = CANVAS_HEIGHT / 2 - this.player.height / 2;
       this.player.targetY = this.player.y;
+      this.player.stunTimer = 0;
       this.bot.y = CANVAS_HEIGHT / 2 - this.bot.height / 2;
+      this.bot.stunTimer = 0;
       this.pauseBtn.textContent = '⏸ Pause';
       if (this.overlayRestartBtn) {
         this.overlayRestartBtn.classList.add('hidden');
@@ -1936,7 +1982,7 @@
       const initialSurge = Math.min(3, MAX_SIDE_DUCKS - this.sideDucks.length);
       for (let w = 0; w < initialSurge; w++) {
         const side = Math.random() < 0.5 ? 'left' : 'right';
-        const isEvil = Math.random() < 0.45;
+        const isEvil = Math.random() < 0.15;
         const surgeDuck = new SideDuck(side, isEvil);
         surgeDuck.x += (side === 'left' ? -w * 32 : w * 32);
         this.sideDucks.push(surgeDuck);
@@ -2015,11 +2061,9 @@
           const diffMult = this.difficulty === 'hard' ? 2.0 : (this.difficulty === 'medium' ? 1.5 : 1.0);
           pointsDelta = Math.round((baseWin + marginBonus) * diffMult);
         } else {
-          const deficit = Math.abs(scoreDifference);
-          const baseLoss = 15;
-          const marginPenalty = deficit * 8;
-          const diffDiscount = this.difficulty === 'hard' ? 0.75 : (this.difficulty === 'medium' ? 1.0 : 1.25);
-          pointsDelta = -Math.round((baseLoss + marginPenalty) * diffDiscount);
+          // Losses NEVER reduce permanent points!
+          // Award a friendly +5 ⭐ effort bonus so your points are strictly permanent and cumulative
+          pointsDelta = 5;
         }
 
         const oldPoints = this.points;
@@ -2053,8 +2097,8 @@
           ? `Won by +${scoreDifference} point${scoreDifference > 1 ? 's' : ''}`
           : `Lost by ${Math.abs(scoreDifference)} point${Math.abs(scoreDifference) > 1 ? 's' : ''}`;
 
-        this.breakdownPointsDelta.textContent = pointsDelta > 0 ? `+${pointsDelta} ⭐` : `${pointsDelta} ⭐`;
-        this.breakdownPointsDelta.className = pointsDelta > 0 ? 'points-gain' : 'points-loss';
+        this.breakdownPointsDelta.textContent = `+${pointsDelta} ⭐`;
+        this.breakdownPointsDelta.className = 'points-gain';
         this.breakdownNewTotal.textContent = `${this.points} ⭐`;
 
         this.resultBreakdown.classList.remove('hidden');
@@ -2086,37 +2130,52 @@
 
     update(dt) {
       // 1. Player Paddle Update
-      if (this.keys.up) {
-        this.player.targetY = Math.max(10, this.player.targetY - 12);
-      }
-      if (this.keys.down) {
-        this.player.targetY = Math.min(CANVAS_HEIGHT - this.player.height - 10, this.player.targetY + 12);
-      }
-      this.player.y += (this.player.targetY - this.player.y) * 0.22;
-
-      // 2. AI Bot Paddle update
-      let targetBotY = this.bot.y;
-      if (this.duck.vx > 0) {
-        const timeToReach = (this.bot.x - this.duck.x) / this.duck.vx;
-        if (timeToReach > 0 && timeToReach < 2.5) {
-          let predictedY = this.duck.y + this.duck.vy * timeToReach;
-          while (predictedY < 20 || predictedY > CANVAS_HEIGHT - 20) {
-            if (predictedY < 20) predictedY = 40 - predictedY;
-            if (predictedY > CANVAS_HEIGHT - 20) predictedY = (CANVAS_HEIGHT - 20) * 2 - predictedY;
-          }
-          targetBotY = predictedY - this.bot.height / 2;
-        } else {
-          targetBotY = this.duck.y - this.bot.height / 2;
+      if (this.player.stunTimer > 0) {
+        this.player.stunTimer = Math.max(0, this.player.stunTimer - dt);
+        this.player.targetY = this.player.y;
+        if (Math.random() < 0.25) {
+          this.particles.push(new Particle(this.player.x + Math.random() * this.player.width, this.player.y + Math.random() * this.player.height, 'zap', '#ffd166'));
         }
       } else {
-        targetBotY = CANVAS_HEIGHT / 2 - this.bot.height / 2;
+        if (this.keys.up) {
+          this.player.targetY = Math.max(10, this.player.targetY - 12);
+        }
+        if (this.keys.down) {
+          this.player.targetY = Math.min(CANVAS_HEIGHT - this.player.height - 10, this.player.targetY + 12);
+        }
+        this.player.y += (this.player.targetY - this.player.y) * 0.22;
       }
 
-      const botDiff = targetBotY - this.bot.y;
-      if (Math.abs(botDiff) > 4) {
-        this.bot.y += Math.sign(botDiff) * Math.min(this.bot.speed, Math.abs(botDiff));
+      // 2. AI Bot Paddle update
+      if (this.bot.stunTimer > 0) {
+        this.bot.stunTimer = Math.max(0, this.bot.stunTimer - dt);
+        if (Math.random() < 0.25) {
+          this.particles.push(new Particle(this.bot.x + Math.random() * this.bot.width, this.bot.y + Math.random() * this.bot.height, 'zap', '#00f5d4'));
+        }
+      } else {
+        let targetBotY = this.bot.y;
+        if (this.duck.vx > 0) {
+          const timeToReach = (this.bot.x - this.duck.x) / this.duck.vx;
+          if (timeToReach > 0 && timeToReach < 2.5) {
+            let predictedY = this.duck.y + this.duck.vy * timeToReach;
+            while (predictedY < 20 || predictedY > CANVAS_HEIGHT - 20) {
+              if (predictedY < 20) predictedY = 40 - predictedY;
+              if (predictedY > CANVAS_HEIGHT - 20) predictedY = (CANVAS_HEIGHT - 20) * 2 - predictedY;
+            }
+            targetBotY = predictedY - this.bot.height / 2;
+          } else {
+            targetBotY = this.duck.y - this.bot.height / 2;
+          }
+        } else {
+          targetBotY = CANVAS_HEIGHT / 2 - this.bot.height / 2;
+        }
+
+        const botDiff = targetBotY - this.bot.y;
+        if (Math.abs(botDiff) > 4) {
+          this.bot.y += Math.sign(botDiff) * Math.min(this.bot.speed, Math.abs(botDiff));
+        }
+        this.bot.y = Math.max(10, Math.min(CANVAS_HEIGHT - this.bot.height - 10, this.bot.y));
       }
-      this.bot.y = Math.max(10, Math.min(CANVAS_HEIGHT - this.bot.height - 10, this.bot.y));
 
       // 3. Main Duck Physics (The duck you play the game with!)
       this.duck.x += this.duck.vx;
@@ -2181,7 +2240,7 @@
         this.handlePaddleHit(this.bot, -1);
       }
 
-      // 5. SIDE DUCKS SPAWNER (CONTINUOUS DUCK FLOOD: Normal & Evil Ducks)
+      // 5. SIDE DUCKS SPAWNER (CONTINUOUS DUCK FLOOD: Normal & Rare Evil Ducks)
       this.sideSpawnTimer += dt;
       if (this.sideSpawnTimer >= this.nextSideSpawnDelay && this.sideDucks.length < MAX_SIDE_DUCKS) {
         this.sideSpawnTimer = 0;
@@ -2198,7 +2257,8 @@
           const side = (s === 1 && Math.random() < 0.7)
             ? (this.sideDucks.length > 0 && this.sideDucks[this.sideDucks.length - 1].side === 'left' ? 'right' : 'left')
             : (Math.random() < 0.5 ? 'left' : 'right');
-          const isEvil = Math.random() < 0.45;
+          // Rare evil ducks (only ~15% chance, friendly ducks make up the rest!)
+          const isEvil = Math.random() < 0.15;
           if (isEvil) hasEvil = true;
 
           const newSideDuck = new SideDuck(side, isEvil);
@@ -2361,17 +2421,22 @@
 
           sfx.playPaddleHit();
           if (duck.isEvil) {
+            // EVIL DUCK STUNS THE PLAYER PADDLE! (Never reduces permanent points)
+            this.player.stunTimer = 1.25;
             sfx.playEvilQuack();
+            sfx.playZap();
             this.triggerQuackWave(duck.x, duck.y, '#ef233c');
-            this.spawnFeathers(duck.x, duck.y, 4, '#ef233c');
+            this.spawnFeathers(duck.x, duck.y, 6, '#ef233c');
+            for (let p = 0; p < 8; p++) {
+              this.particles.push(new Particle(this.player.x + Math.random() * this.player.width, this.player.y + Math.random() * this.player.height, 'zap', '#ffd166'));
+            }
           } else {
             sfx.playQuack(1.0, 'classic');
             this.triggerQuackWave(duck.x, duck.y, '#ffd166');
             this.spawnFeathers(duck.x, duck.y, 4, '#ffbe0b');
+            this.points += 5;
+            this.updatePointsUI(5);
           }
-
-          this.points += 5;
-          this.updatePointsUI(5);
         }
 
         if (
@@ -2389,8 +2454,14 @@
 
           sfx.playPaddleHit();
           if (duck.isEvil) {
+            // Evil duck stuns bot paddle too!
+            this.bot.stunTimer = 1.25;
             sfx.playEvilQuack();
-            this.spawnFeathers(duck.x, duck.y, 4, '#ef233c');
+            sfx.playZap();
+            this.spawnFeathers(duck.x, duck.y, 6, '#ef233c');
+            for (let p = 0; p < 8; p++) {
+              this.particles.push(new Particle(this.bot.x + Math.random() * this.bot.width, this.bot.y + Math.random() * this.bot.height, 'zap', '#00f5d4'));
+            }
           } else {
             sfx.playQuack(1.0, 'classic');
             this.spawnFeathers(duck.x, duck.y, 4, '#ffbe0b');
@@ -2684,6 +2755,11 @@
     drawPaddles(ctx) {
       const drawSinglePaddle = (paddle, isPlayer) => {
         ctx.save();
+        const isStunned = paddle.stunTimer > 0;
+        const jitterX = isStunned ? (Math.random() - 0.5) * 4 : 0;
+        const jitterY = isStunned ? (Math.random() - 0.5) * 4 : 0;
+        ctx.translate(jitterX, jitterY);
+
         ctx.fillStyle = '#8d6e63';
         drawRounded(ctx, paddle.x + (isPlayer ? -10 : paddle.width), paddle.y + paddle.height * 0.3, 10, paddle.height * 0.4, 3);
         ctx.fill();
@@ -2691,18 +2767,50 @@
         let bladeColor = paddle.color;
         if (paddle.hitFlash > 0) {
           bladeColor = '#ffffff';
+        } else if (isStunned) {
+          bladeColor = (Math.floor(this.time * 25) % 2 === 0) ? '#ffea00' : '#ffd166';
         }
         ctx.fillStyle = bladeColor;
-        ctx.shadowColor = isPlayer ? 'rgba(230, 57, 70, 0.5)' : 'rgba(58, 134, 255, 0.5)';
-        ctx.shadowBlur = paddle.hitFlash > 0 ? 15 : 6;
+
+        if (isStunned) {
+          ctx.shadowColor = '#ffd166';
+          ctx.shadowBlur = 18;
+        } else {
+          ctx.shadowColor = isPlayer ? 'rgba(230, 57, 70, 0.5)' : 'rgba(58, 134, 255, 0.5)';
+          ctx.shadowBlur = paddle.hitFlash > 0 ? 15 : 6;
+        }
 
         drawRounded(ctx, paddle.x, paddle.y, paddle.width, paddle.height, 9);
         ctx.fill();
 
         ctx.shadowBlur = 0;
-        ctx.strokeStyle = '#d7ccc8';
+        ctx.strokeStyle = isStunned ? '#ffea00' : '#d7ccc8';
         ctx.lineWidth = 2;
         ctx.stroke();
+
+        // Stunned Electric Lightning Arcs & Floating Label
+        if (isStunned) {
+          ctx.strokeStyle = '#00f5d4';
+          ctx.lineWidth = 2;
+          ctx.beginPath();
+          const px = paddle.x + (isPlayer ? paddle.width : 0);
+          ctx.moveTo(px, paddle.y + 8);
+          ctx.lineTo(px + (isPlayer ? 7 : -7), paddle.y + 24);
+          ctx.lineTo(px + (isPlayer ? -2 : 2), paddle.y + 45);
+          ctx.lineTo(px + (isPlayer ? 9 : -9), paddle.y + 70);
+          ctx.lineTo(px, paddle.y + paddle.height - 8);
+          ctx.stroke();
+
+          // Floating Stun Badge above paddle
+          ctx.fillStyle = '#ffea00';
+          ctx.font = 'bold 12px Fredoka, sans-serif';
+          ctx.textAlign = 'center';
+          ctx.shadowColor = '#000000';
+          ctx.shadowBlur = 6;
+          const labelX = isPlayer ? paddle.x + paddle.width / 2 + 10 : paddle.x + paddle.width / 2 - 10;
+          ctx.fillText(`⚡ STUNNED!`, labelX, paddle.y - 12);
+        }
+
         ctx.restore();
       };
 

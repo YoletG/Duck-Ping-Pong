@@ -28,10 +28,11 @@ As rallies unfold, ducks **flood in continuously** from both sides in rapid stre
   - Can be rallied by your paddle (`+5 ⭐ Duck Saved!`) with cheerful quacks and golden feather bursts!
   - Deflecting a normal duck past the bot paddle awards a **`+15 ⭐ Rescue Bonus`**!
   - Can bump harmlessly into other ducks with playful quacks and splashes.
-- **😈 Spinning Red Evil Ducks:**
-  - Fiery crimson ducks with spiky horns and sinister glowing eyes that **continuously spin 360°** across the pond!
-  - Strike them with your paddle to deflect them back toward the bot (`+5 ⭐ Deflection Bonus`)!
-  - Colliding mid-air with other ducks triggers an explosion of red feathers and shockwaves!
+- **😈 Rare Spinning Evil Ducks (⚡ Paddle Stun!):**
+  - Fiery crimson ducks with spiky horns and glowing eyes that appear rarely (~15% of the flood) and **spin 360°** across the pond!
+  - **⚡ Paddle Stun Mechanic:** Touching an evil duck **stuns and immobilizes the paddle** for 1.25 seconds with crackling electric sparks and zap audio!
+  - **No Point Loss:** Evil ducks never reduce your permanent points!
+  - **Bot Stun Advantage:** Deflecting an evil duck into the bot paddle stuns the bot, freezing it in place and leaving the goal wide open!
   - Knocking an evil duck past the bot paddle awards a **`+15 ⭐ Evil Banish Bonus`**!
 - **HUD Flood Tracker:** Live counter displays the number of active normal and evil ducks in the pond (`🦆 X · 😈 Y`).
 
@@ -49,8 +50,8 @@ Watch out for the mysterious **VIP Tuxedo Boss Duck**:
 
 ---
 
-### ⭐ Margin-Based Points & Rating System
-Your points update after each round based on **how much you win by or lose by**:
+### ⭐ Permanent Cumulative Points System
+Your points only **grow and accumulate** across matches—they are never deducted!
 
 - **Winning a Round:**
   - Base Reward: `+25 ⭐`
@@ -61,14 +62,12 @@ Your points update after each round based on **how much you win by or lose by**:
     - **Mallard Master:** `2.0x`
   - *Example:* Winning 7 - 1 on Pond Pro awards: `(25 + 6 × 15) × 1.5 = +172 ⭐`!
 
-- **Losing a Round:**
-  - Base Loss: `-15 ⭐`
-  - Deficit Penalty: `-8 ⭐` for each point deficit (`botScore - playerScore`)
-  - Harder bots reduce the point penalty to reward brave players.
-  - *Note:* Points cannot drop below 0.
+- **Round Defeats:**
+  - Awards a `+5 ⭐` effort bonus so your points **never decrease**!
+  - All unlocked skins remain unlocked forever.
 
 - **Persistent Progress:**
-  - Your points and currently equipped skin are saved automatically in your browser's `localStorage`.
+  - Points and currently equipped skins are saved automatically in your browser's `localStorage`.
 
 ---
 
