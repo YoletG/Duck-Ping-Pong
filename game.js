@@ -1196,6 +1196,14 @@
       this.targetDuck = targetDuck;
       this.x = targetDuck.x;
       this.y = targetDuck.y;
+      this.isEvil = Boolean(targetDuck.isEvil);
+
+      // Subdue evil duck: stop wild spinning and make it freeze in surprise!
+      if (this.isEvil) {
+        this.targetDuck.spinSpeed = 0;
+        this.targetDuck.rotation = 0;
+      }
+      this.targetDuck.hitFlash = 0.6;
 
       // Two guards start above and swoop in
       this.leftGuardY = this.y - 140;
@@ -1228,6 +1236,7 @@
         this.y -= liftSpeed;
         this.leftGuardY = this.y;
         this.rightGuardY = this.y;
+        this.targetDuck.x = this.x;
         this.targetDuck.y = this.y;
 
         // Fully carried off screen
@@ -1240,34 +1249,51 @@
     draw(ctx) {
       ctx.save();
 
-      // Flashing Police Beacon Glow (Red & Blue alternating)
-      const flashColor = Math.sin(this.sirenFlash) > 0 ? 'rgba(230, 57, 70, 0.45)' : 'rgba(58, 134, 255, 0.45)';
+      // Flashing Police Beacon Glow (Red & Blue alternating, or extra vibrant for evil ducks)
+      const flashColor = this.isEvil
+        ? (Math.sin(this.sirenFlash * 1.5) > 0 ? 'rgba(239, 35, 60, 0.65)' : 'rgba(58, 134, 255, 0.55)')
+        : (Math.sin(this.sirenFlash) > 0 ? 'rgba(230, 57, 70, 0.45)' : 'rgba(58, 134, 255, 0.45)');
       ctx.fillStyle = flashColor;
       ctx.beginPath();
-      ctx.arc(this.x, this.y - 20, 32, 0, Math.PI * 2);
+      ctx.arc(this.x, this.y - 20, 36, 0, Math.PI * 2);
       ctx.fill();
 
-      // "APPREHENDED!" badge text over duck
+      // Apprehended badge text over duck
       ctx.fillStyle = '#ffffff';
       ctx.font = 'bold 12px sans-serif';
       ctx.textAlign = 'center';
-      ctx.fillText('🚨 APPREHENDED! 🚨', this.x, this.y - 34);
+      if (this.isEvil) {
+        ctx.fillText('🚨 EVIL DUCK APPREHENDED! 🚨', this.x, this.y - 34);
+        ctx.font = 'bold 9.5px sans-serif';
+        ctx.fillStyle = '#ff4d6d';
+        ctx.fillText('Subdued by The Trump Duck', this.x, this.y - 20);
+      } else {
+        ctx.fillText('🚨 APPREHENDED! 🚨', this.x, this.y - 34);
+        ctx.font = 'bold 9.5px sans-serif';
+        ctx.fillStyle = '#ffd166';
+        ctx.fillText('By The Trump Duck', this.x, this.y - 20);
+      }
 
-      ctx.font = 'bold 9.5px sans-serif';
-      ctx.fillStyle = '#ffd166';
-      ctx.fillText('By The Trump Duck', this.x, this.y - 20);
-
-      // Draw the apprehended target duck in center (with surprised eyes)
-      ctx.save();
-      ctx.translate(this.x, this.y);
+      // Draw the apprehended target duck in center between guards
+      // targetDuck.draw(ctx) translates itself to its own targetDuck.x / y
+      this.targetDuck.x = this.x;
+      this.targetDuck.y = this.y;
       this.targetDuck.draw(ctx);
 
-      // Funny panic sweat drop
+      // Funny panic sweat drop on the duck
       ctx.fillStyle = '#00b4d8';
       ctx.beginPath();
-      ctx.arc(14, -18, 3, 0, Math.PI * 2);
+      ctx.arc(this.x + 14, this.y - 18, 3.5, 0, Math.PI * 2);
       ctx.fill();
-      ctx.restore();
+
+      // If evil duck, draw glowing containment energy cuffs around it
+      if (this.isEvil) {
+        ctx.strokeStyle = '#ffd166';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.ellipse(this.x, this.y + 4, 16, 7, 0, 0, Math.PI * 2);
+        ctx.stroke();
+      }
 
       // Guard 1 (Left): Flanking and facing right
       drawGuardDuck(ctx, this.x - 26, this.leftGuardY, true, this.wingAngle);
@@ -2395,20 +2421,28 @@
             this.triggerQuackWave(this.tuxedoDuck.x, this.tuxedoDuck.y, '#ffd166');
           }
 
-          // ARREST TRIGGER: Whatever OTHER duck the Tuxedo Duck touches
-          // will be taken away by two ducks wearing helmets and suits!
+          // ARREST TRIGGER: Whatever OTHER duck The Trump Duck touches
+          // (Even Evil Ducks!) will be taken away by two ducks wearing helmets and suits!
           for (let i = this.sideDucks.length - 1; i >= 0; i--) {
             const sideDuck = this.sideDucks[i];
             const adx = sideDuck.x - this.tuxedoDuck.x;
             const ady = sideDuck.y - this.tuxedoDuck.y;
             const adist = Math.hypot(adx, ady);
-            if (adist < sideDuck.radius + this.tuxedoDuck.radius) {
-              // Apprehend this duck!
+            const touchRadius = (sideDuck.isEvil ? 28 : sideDuck.radius) + this.tuxedoDuck.radius + 6;
+            if (adist < touchRadius) {
+              // Apprehend this duck (Normal or Evil)!
               this.arrestEscorts.push(new ArrestEscort(sideDuck));
               this.sideDucks.splice(i, 1);
+              if (sideDuck.isEvil) {
+                sfx.playEvilQuack();
+                this.spawnFeathers(sideDuck.x, sideDuck.y, 8, '#ef233c');
+                for (let p = 0; p < 8; p++) {
+                  this.particles.push(new Particle(sideDuck.x, sideDuck.y, 'zap', '#ff4d6d'));
+                }
+              }
               sfx.playPoliceSiren();
               sfx.playSuaveQuack();
-              this.triggerQuackWave(this.tuxedoDuck.x, this.tuxedoDuck.y, '#ffd166');
+              this.triggerQuackWave(this.tuxedoDuck.x, this.tuxedoDuck.y, sideDuck.isEvil ? '#ef233c' : '#ffd166');
               this.updateScoreboard();
               break;
             }
@@ -2421,9 +2455,15 @@
         const escort = this.arrestEscorts[i];
         escort.update(dt);
         if (escort.finished) {
-          this.points += 20;
-          this.updatePointsUI(20);
-          this.spawnFeathers(escort.x, 25, 6, '#ffd700');
+          const reward = escort.isEvil ? 30 : 20;
+          this.points += reward;
+          this.updatePointsUI(reward);
+          this.spawnFeathers(escort.x, 25, 8, escort.isEvil ? '#ef233c' : '#ffd700');
+          if (escort.isEvil) {
+            for (let p = 0; p < 6; p++) {
+              this.particles.push(new Particle(escort.x, 25, 'sparkle', '#ff4d6d'));
+            }
+          }
           this.arrestEscorts.splice(i, 1);
         }
       }
@@ -2432,6 +2472,31 @@
       for (let i = 0; i < this.sideDucks.length; i++) {
         const duck = this.sideDucks[i];
         duck.update(dt);
+
+        // Check immediate touch with The Trump Duck (Normal or Evil duck will be apprehended!)
+        if (this.tuxedoDuck !== null) {
+          const tdx = duck.x - this.tuxedoDuck.x;
+          const tdy = duck.y - this.tuxedoDuck.y;
+          const tdist = Math.hypot(tdx, tdy);
+          const touchRadius = (duck.isEvil ? 28 : duck.radius) + this.tuxedoDuck.radius + 6;
+          if (tdist < touchRadius) {
+            this.arrestEscorts.push(new ArrestEscort(duck));
+            this.sideDucks.splice(i, 1);
+            i--;
+            if (duck.isEvil) {
+              sfx.playEvilQuack();
+              this.spawnFeathers(duck.x, duck.y, 8, '#ef233c');
+              for (let p = 0; p < 8; p++) {
+                this.particles.push(new Particle(duck.x, duck.y, 'zap', '#ff4d6d'));
+              }
+            }
+            sfx.playPoliceSiren();
+            sfx.playSuaveQuack();
+            this.triggerQuackWave(this.tuxedoDuck.x, this.tuxedoDuck.y, duck.isEvil ? '#ef233c' : '#ffd166');
+            this.updateScoreboard();
+            continue;
+          }
+        }
 
         if (Math.random() < 0.22) {
           this.particles.push(new Particle(duck.x, duck.y, 'sparkle', duck.isEvil ? '#ef233c' : '#ffd166'));

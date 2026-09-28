@@ -45,9 +45,9 @@ Watch out for the distinguished **The Trump Duck**:
 - **Strictly One at a Time:** Only **one** The Trump Duck can ever appear in the pond at any given time.
 - **The Bodyguard Law:**
   - **Your Game Ball is EXEMPT:** If The Trump Duck touches the main ball duck you are playing with, they bounce off each other normally.
-  - **Any OTHER Duck is ARRESTED:** Whatever other duck The Trump Duck touches (Normal duck or Evil duck) will immediately be apprehended!
-  - **Two Ducks in Helmets & Suits:** A pair of tactical security ducks wearing SWAT helmets and dark suits swoop down from above with flashing police lights (`🚨`), grasp the target duck on both sides, and carry it straight up into the sky (`+20 ⭐ Arrest Bonus!`).
-  - **Audio:** Features suave dapper quacks and a comical two-tone police siren!
+  - **Evil Ducks are Apprehended Too:** Even if The Trump Duck touches a red spinning Evil Duck, the evil duck's spin is neutralized and it is immediately apprehended and subdued in containment handcuffs!
+  - **Two Ducks in Helmets & Suits:** A pair of tactical security ducks wearing SWAT helmets and dark suits swoop down with flashing beacons (`🚨`), flank the duck, and escort it straight up out of the pond (`+20 ⭐` for Normal Ducks, **`+30 ⭐` for Evil Ducks**!).
+  - **Audio & Visuals:** Features dapper quacks, shocked evil duck shrieks, comical two-tone police sirens, and `🚨 EVIL DUCK APPREHENDED! 🚨` status banners!
 
 ---
 
