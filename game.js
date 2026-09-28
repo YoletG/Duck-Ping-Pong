@@ -1500,6 +1500,7 @@
       this.difficultySelect = document.getElementById('difficulty');
       this.soundToggleBtn = document.getElementById('soundToggle');
       this.pauseBtn = document.getElementById('pauseBtn');
+      this.restartBtn = document.getElementById('restartBtn');
       this.skinsBtn = document.getElementById('skinsBtn');
       this.skinUnlockedCountEl = document.getElementById('skinUnlockedCount');
       this.activeSkinNameEl = document.getElementById('activeSkinName');
@@ -1514,6 +1515,7 @@
       this.overlayMsg = document.getElementById('overlayMessage');
       this.overlayDuck = document.getElementById('overlayDuck');
       this.actionBtn = document.getElementById('actionBtn');
+      this.overlayRestartBtn = document.getElementById('overlayRestartBtn');
       this.resultBreakdown = document.getElementById('resultBreakdown');
       this.breakdownScore = document.getElementById('breakdownScore');
       this.breakdownMargin = document.getElementById('breakdownMargin');
@@ -1695,6 +1697,8 @@
           this.keys.down = true;
         } else if (e.code === 'KeyP') {
           this.togglePause();
+        } else if (e.code === 'KeyR') {
+          this.restartGame();
         } else if (e.code === 'Space') {
           if (this.state === 'MENU' || this.state === 'GAMEOVER') {
             this.startGame();
@@ -1731,6 +1735,18 @@
       this.pauseBtn.addEventListener('click', () => {
         this.togglePause();
       });
+
+      if (this.restartBtn) {
+        this.restartBtn.addEventListener('click', () => {
+          this.restartGame();
+        });
+      }
+
+      if (this.overlayRestartBtn) {
+        this.overlayRestartBtn.addEventListener('click', () => {
+          this.restartGame();
+        });
+      }
 
       this.soundToggleBtn.addEventListener('click', () => {
         sfx.init();
@@ -1835,6 +1851,16 @@
       this.rally = 0;
       this.bestRally = 0;
       this.sideDucks = [];
+      this.tuxedoDuck = null;
+      this.arrestEscorts = [];
+      this.particles = [];
+      this.player.y = CANVAS_HEIGHT / 2 - this.player.height / 2;
+      this.player.targetY = this.player.y;
+      this.bot.y = CANVAS_HEIGHT / 2 - this.bot.height / 2;
+      this.pauseBtn.textContent = '⏸ Pause';
+      if (this.overlayRestartBtn) {
+        this.overlayRestartBtn.classList.add('hidden');
+      }
       this.updateScoreboard();
 
       this.resultBreakdown.classList.add('hidden');
@@ -1847,7 +1873,15 @@
         this.running = true;
         this.lastFrameTime = performance.now();
         requestAnimationFrame((t) => this.gameLoop(t));
+      } else {
+        this.lastFrameTime = performance.now();
       }
+    }
+
+    restartGame() {
+      sfx.init();
+      sfx.playQuack(1.2, 'classic');
+      this.startGame();
     }
 
     togglePause() {
@@ -1859,11 +1893,17 @@
         this.resultBreakdown.classList.add('hidden');
         this.tipsBox.classList.remove('hidden');
         this.actionBtn.textContent = 'Resume';
+        if (this.overlayRestartBtn) {
+          this.overlayRestartBtn.classList.remove('hidden');
+        }
         this.overlay.classList.remove('hidden');
         this.pauseBtn.textContent = '▶ Resume';
       } else if (this.state === 'PAUSED') {
         this.state = 'PLAYING';
         this.overlay.classList.add('hidden');
+        if (this.overlayRestartBtn) {
+          this.overlayRestartBtn.classList.add('hidden');
+        }
         this.pauseBtn.textContent = '⏸ Pause';
         this.lastFrameTime = performance.now();
       }

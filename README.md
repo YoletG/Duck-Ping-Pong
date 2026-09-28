@@ -81,6 +81,7 @@ Your points update after each round based on **how much you win by or lose by**:
 | **W / S** or **↑ / ↓** | Keyboard paddle movement |
 | **Spacebar** | Start game or resume round |
 | **P** | Pause / resume game |
+| **R** or **🔄 Restart** | Instantly restart round/game |
 | **🎨 Skins Button** | Open Duck Wardrobe |
 | **🔊 Sound Button** | Toggle procedural sound effects |
 
