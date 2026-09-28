@@ -18,17 +18,29 @@
         <h1>Duck Ping Pong</h1>
         <span class="paddle-icon">🏓</span>
       </div>
-      <div class="controls-bar">
-        <div class="difficulty-select">
-          <label for="difficulty">Bot Level:</label>
-          <select id="difficulty">
-            <option value="easy">Casual Duckling</option>
-            <option value="medium" selected>Pond Pro</option>
-            <option value="hard">Mallard Master</option>
-          </select>
+
+      <div class="header-right">
+        <!-- Points / Rating Badge -->
+        <div class="points-badge" id="pointsBadge" title="Your total pond rating points">
+          <span class="star-icon">⭐</span>
+          <span class="points-label">Points:</span>
+          <span id="playerPoints" class="points-val">100</span>
+          <span id="pointsChangeAnim" class="points-change-anim"></span>
         </div>
-        <button id="soundToggle" class="btn btn-icon" title="Toggle Sound">🔊 Sound</button>
-        <button id="pauseBtn" class="btn btn-icon" title="Pause Game (P)">⏸ Pause</button>
+
+        <div class="controls-bar">
+          <div class="difficulty-select">
+            <label for="difficulty">Bot:</label>
+            <select id="difficulty">
+              <option value="easy">Casual Duckling</option>
+              <option value="medium" selected>Pond Pro</option>
+              <option value="hard">Mallard Master</option>
+            </select>
+          </div>
+          <button id="skinsBtn" class="btn btn-accent" title="Change Duck Skin">🎨 Skins <span id="skinUnlockedCount" class="badge-count">1/7</span></button>
+          <button id="soundToggle" class="btn btn-icon" title="Toggle Sound">🔊 Sound</button>
+          <button id="pauseBtn" class="btn btn-icon" title="Pause Game (P)">⏸ Pause</button>
+        </div>
       </div>
     </header>
 
@@ -42,9 +54,14 @@
         <span id="playerScore" class="score-num">0</span>
       </div>
 
-      <div class="rally-counter">
-        <span class="rally-label">RALLY</span>
-        <span id="rallyCount" class="rally-num">0</span>
+      <div class="center-hud">
+        <div class="rally-counter">
+          <span class="rally-label">RALLY</span>
+          <span id="rallyCount" class="rally-num">0</span>
+        </div>
+        <div class="active-skin-tag" id="activeSkinTag">
+          <span>Skin: </span><strong id="activeSkinName">Classic Ducky</strong>
+        </div>
       </div>
 
       <div class="score-card bot-card">
@@ -62,23 +79,66 @@
 
       <!-- Overlay for Start / Pause / Game Over -->
       <div id="gameOverlay" class="game-overlay">
-        <div class="overlay-card">
+        <div class="overlay-card" id="overlayCard">
           <div id="overlayDuck" class="overlay-mascot">🦆</div>
           <h2 id="overlayTitle">Duck Ping Pong</h2>
           <p id="overlayMessage">Bounce the duck across the pond! Don't let it slip past your paddle.</p>
-          <div class="tips-box">
+
+          <!-- Round Result Breakdown (Visible after matches) -->
+          <div id="resultBreakdown" class="result-breakdown hidden">
+            <div class="breakdown-row">
+              <span>Match Result:</span>
+              <strong id="breakdownScore">7 - 3</strong>
+            </div>
+            <div class="breakdown-row">
+              <span>Score Margin:</span>
+              <strong id="breakdownMargin">+4 points</strong>
+            </div>
+            <div class="breakdown-row highlight">
+              <span>Points Earned / Lost:</span>
+              <strong id="breakdownPointsDelta" class="points-gain">+75 ⭐</strong>
+            </div>
+            <div class="breakdown-row">
+              <span>New Total:</span>
+              <strong id="breakdownNewTotal">175 ⭐</strong>
+            </div>
+          </div>
+
+          <div class="tips-box" id="tipsBox">
             <p><strong>Controls:</strong> Move Mouse or Touch & Drag, or use <strong>W/S</strong> / <strong>↑/↓</strong> Arrow Keys</p>
           </div>
           <button id="actionBtn" class="btn btn-primary">Start Game</button>
+        </div>
+      </div>
+
+      <!-- Duck Skins Selector Modal -->
+      <div id="skinsModal" class="game-overlay hidden">
+        <div class="overlay-card skins-card">
+          <div class="skins-modal-header">
+            <h2>🎨 Duck Wardrobe</h2>
+            <p>Earn points each round to unlock rare and legendary duck skins!</p>
+            <div class="skins-current-points">
+              <span>Your Points:</span>
+              <strong id="skinsModalPoints">100 ⭐</strong>
+            </div>
+          </div>
+
+          <!-- Grid of Duck Skins -->
+          <div class="skins-grid" id="skinsGrid">
+            <!-- Dynamically populated by game.js -->
+          </div>
+
+          <button id="closeSkinsBtn" class="btn btn-secondary">Back to Game</button>
         </div>
       </div>
     </div>
 
     <!-- Footer Controls & Info -->
     <footer class="game-footer">
-      <div class="instruction-tag">🎮 <span>Mouse / Touch or <strong>W/S</strong> / <strong>↑/↓</strong> to move paddle</span></div>
-      <div class="instruction-tag">🎯 <span>First to 7 wins the trophy</span></div>
-      <div class="instruction-tag">🔊 <span>Audio synthesized with Web Audio API</span></div>
+      <div class="instruction-tag">🎮 <span>Mouse / Touch or <strong>W/S</strong> / <strong>↑/↓</strong></span></div>
+      <div class="instruction-tag">🎯 <span>First to 7 wins round</span></div>
+      <div class="instruction-tag">⭐ <span>Win by big margins to earn max points!</span></div>
+      <div class="instruction-tag">🦆 <span>Unlock all 7 duck skins</span></div>
     </footer>
   </div>
 
