@@ -395,6 +395,24 @@ body {
   gap: 2px;
 }
 
+.badge-boss {
+  color: #e0e1dd;
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.badge-boss.active {
+  color: #ffd166;
+  text-shadow: 0 0 8px rgba(255, 209, 102, 0.7);
+  animation: bossPulse 1.2s infinite alternate;
+}
+
+@keyframes bossPulse {
+  0% { transform: scale(1); }
+  100% { transform: scale(1.1); color: #fff; }
+}
+
 /* Canvas Wrapper */
 .canvas-wrapper {
   position: relative;

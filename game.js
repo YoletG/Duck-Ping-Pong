@@ -3,7 +3,8 @@
  * A retro arcade pond game where you rally a duck against an AI bot paddle.
  * Includes multiple duck skins, persistent points, margin-based rewards,
  * normal friendly ducks & spinning red evil ducks flowing in from the sides,
- * and zero-scroll arrow controls!
+ * a Tuxedo Duck with a pointy haircut (only 1 at a time!),
+ * and two Helmet-&-Suit Security Ducks that arrest any duck it touches!
  */
 
 (function () {
@@ -212,6 +213,61 @@
       osc2.stop(now + 0.24);
     }
 
+    // Suave, classy low quack for Tuxedo Duck
+    playSuaveQuack() {
+      if (this.muted) return;
+      this.init();
+      if (!this.ctx) return;
+
+      const now = this.ctx.currentTime;
+      const osc = this.ctx.createOscillator();
+      const gain = this.ctx.createGain();
+      const filter = this.ctx.createBiquadFilter();
+
+      filter.type = 'bandpass';
+      filter.frequency.setValueAtTime(500, now);
+      filter.Q.setValueAtTime(3.5, now);
+
+      osc.type = 'sawtooth';
+      osc.frequency.setValueAtTime(320, now);
+      osc.frequency.exponentialRampToValueAtTime(200, now + 0.22);
+
+      gain.gain.setValueAtTime(0.01, now);
+      gain.gain.linearRampToValueAtTime(0.3, now + 0.04);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.25);
+
+      osc.connect(filter);
+      filter.connect(gain);
+      gain.connect(this.ctx.destination);
+
+      osc.start(now);
+      osc.stop(now + 0.26);
+    }
+
+    // Comical police siren for the escort ducks ("wee-woo wee-woo")
+    playPoliceSiren() {
+      if (this.muted) return;
+      this.init();
+      if (!this.ctx) return;
+
+      const now = this.ctx.currentTime;
+      const tones = [680, 860, 680, 860];
+      tones.forEach((freq, i) => {
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(freq, now + i * 0.12);
+
+        gain.gain.setValueAtTime(0.18, now + i * 0.12);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + i * 0.12 + 0.14);
+
+        osc.connect(gain);
+        gain.connect(this.ctx.destination);
+        osc.start(now + i * 0.12);
+        osc.stop(now + i * 0.12 + 0.15);
+      });
+    }
+
     // Demonic / Evil pitch-shifted quack
     playEvilQuack() {
       if (this.muted) return;
@@ -252,7 +308,6 @@
       osc2.stop(now + 0.28);
     }
 
-    // Ominous rumble/whoosh as evil duck slowly enters
     playEvilEntrance() {
       if (this.muted) return;
       this.init();
@@ -496,16 +551,15 @@
     }
   }
 
-  // --- Side Duck Class (Enters from sides: Normal yellow ducks & spinning red evil ducks) ---
+  // --- Side Duck Class (Normal & Spinning Evil Ducks entering from sides) ---
   class SideDuck {
     constructor(side, isEvil = false) {
-      this.side = side; // 'left' or 'right'
+      this.side = side;
       this.isEvil = isEvil;
       this.radius = 18;
       this.x = side === 'left' ? -25 : CANVAS_WIDTH + 25;
       this.y = Math.random() * (CANVAS_HEIGHT - 180) + 90;
 
-      // Slowly glides across from the side
       const baseSpeed = 2.3 + Math.random() * 1.3;
       this.vx = side === 'left' ? baseSpeed : -baseSpeed;
       this.vy = (Math.random() - 0.5) * 2.4;
@@ -525,17 +579,14 @@
       this.bobTime += dt * 4;
 
       if (this.isEvil) {
-        // Continuous spinning animation for evil ducks
         this.rotation += this.spinSpeed * dt;
         this.wingAngle = Math.sin(this.rotation * 4);
       } else {
-        // Natural swimming orientation & wing flapping for normal ducks
         this.facingRight = this.vx > 0;
         this.rotation = Math.sin(this.bobTime) * 0.08;
         this.wingAngle = Math.sin(this.bobTime * 2);
       }
 
-      // Bounce off top and bottom pond banks
       const topBank = 22;
       const bottomBank = CANVAS_HEIGHT - 22;
       if (this.y - this.radius <= topBank) {
@@ -550,7 +601,6 @@
 
       if (this.hitFlash > 0) this.hitFlash -= dt * 4;
 
-      // Exited far off stage
       if (this.x < -110 || this.x > CANVAS_WIDTH + 110) {
         this.active = false;
       }
@@ -561,16 +611,13 @@
       ctx.translate(this.x, this.y);
 
       if (this.isEvil) {
-        // EVIL DUCK: Continuous 360-degree spinning!
         ctx.rotate(this.rotation);
 
-        // Fiery reddish sinister aura
         ctx.fillStyle = 'rgba(217, 4, 41, 0.3)';
         ctx.beginPath();
         ctx.arc(0, 0, this.radius + 6, 0, Math.PI * 2);
         ctx.fill();
 
-        // Deep Red/Crimson Body Gradient
         const bodyGrad = ctx.createRadialGradient(2, -2, 2, 0, 0, 20);
         bodyGrad.addColorStop(0, '#ff4d6d');
         bodyGrad.addColorStop(0.5, '#d90429');
@@ -580,7 +627,6 @@
         ctx.ellipse(-2, 4, 16, 12, 0, 0, Math.PI * 2);
         ctx.fill();
 
-        // Spiky fiery dark tail
         ctx.fillStyle = '#800f2f';
         ctx.beginPath();
         ctx.moveTo(-14, 2);
@@ -591,7 +637,6 @@
         ctx.closePath();
         ctx.fill();
 
-        // Wing (dark red/crimson)
         ctx.save();
         ctx.translate(-4, 2);
         ctx.rotate(this.wingAngle * 0.35);
@@ -601,7 +646,6 @@
         ctx.fill();
         ctx.restore();
 
-        // Evil Duck Head
         const headGrad = ctx.createRadialGradient(7, -6, 2, 6, -5, 13);
         headGrad.addColorStop(0, '#ff758f');
         headGrad.addColorStop(0.6, '#d90429');
@@ -611,7 +655,6 @@
         ctx.arc(7, -7, 11, 0, Math.PI * 2);
         ctx.fill();
 
-        // Evil Horns / Fiery Spikes on Head
         ctx.fillStyle = '#ffb703';
         ctx.beginPath();
         ctx.moveTo(3, -16);
@@ -627,7 +670,6 @@
         ctx.closePath();
         ctx.fill();
 
-        // Sharp Dark Beak
         ctx.fillStyle = '#1b1b1e';
         ctx.beginPath();
         ctx.moveTo(14, -8);
@@ -640,7 +682,6 @@
         ctx.lineWidth = 1;
         ctx.stroke();
 
-        // Sinister Slanted Evil Eye
         ctx.fillStyle = '#ffea00';
         ctx.beginPath();
         ctx.moveTo(8, -12);
@@ -650,25 +691,21 @@
         ctx.closePath();
         ctx.fill();
 
-        // Red slit pupil
         ctx.fillStyle = '#d90429';
         ctx.beginPath();
         ctx.arc(11, -8.5, 1.5, 0, Math.PI * 2);
         ctx.fill();
       } else {
-        // NORMAL DUCK: Peaceful, smiling yellow ducky!
         if (!this.facingRight) {
           ctx.scale(-1, 1);
         }
         ctx.rotate(this.rotation);
 
-        // Water ripple beneath duck
         ctx.fillStyle = 'rgba(224, 247, 250, 0.35)';
         ctx.beginPath();
         ctx.ellipse(0, 14, 18, 5, 0, 0, Math.PI * 2);
         ctx.fill();
 
-        // Plump Sunny Yellow Body Gradient
         const bodyGrad = ctx.createRadialGradient(2, -2, 3, 0, 2, 18);
         bodyGrad.addColorStop(0, '#ffe066');
         bodyGrad.addColorStop(0.7, '#ffbe0b');
@@ -678,7 +715,6 @@
         ctx.ellipse(-2, 3, 15, 11, 0, 0, Math.PI * 2);
         ctx.fill();
 
-        // Cute upturned tail feather
         ctx.beginPath();
         ctx.moveTo(-13, 2);
         ctx.quadraticCurveTo(-20, -2, -18, -8);
@@ -686,7 +722,6 @@
         ctx.closePath();
         ctx.fill();
 
-        // Flapping Orange Wing
         ctx.save();
         ctx.translate(-3, 1);
         ctx.rotate(this.wingAngle * 0.28);
@@ -696,7 +731,6 @@
         ctx.fill();
         ctx.restore();
 
-        // Round Yellow Head
         const headGrad = ctx.createRadialGradient(7, -6, 2, 6, -5, 12);
         headGrad.addColorStop(0, '#fff3b0');
         headGrad.addColorStop(0.8, '#ffbe0b');
@@ -706,7 +740,6 @@
         ctx.arc(6, -6, 10, 0, Math.PI * 2);
         ctx.fill();
 
-        // Cute tuft feather on top
         ctx.fillStyle = '#ffbe0b';
         ctx.beginPath();
         ctx.moveTo(5, -15);
@@ -714,7 +747,6 @@
         ctx.quadraticCurveTo(8, -15, 7, -15);
         ctx.fill();
 
-        // Friendly Orange Bill
         ctx.fillStyle = '#ff5400';
         ctx.beginPath();
         ctx.moveTo(13, -7);
@@ -723,24 +755,365 @@
         ctx.closePath();
         ctx.fill();
 
-        // Big friendly cartoon eye
         ctx.fillStyle = '#ffffff';
         ctx.beginPath();
         ctx.arc(9, -8, 3.5, 0, Math.PI * 2);
         ctx.fill();
 
-        // Pupil
         ctx.fillStyle = '#111111';
         ctx.beginPath();
         ctx.arc(10, -8, 1.8, 0, Math.PI * 2);
         ctx.fill();
 
-        // Sparkle
         ctx.fillStyle = '#ffffff';
         ctx.beginPath();
         ctx.arc(10.8, -8.8, 0.8, 0, Math.PI * 2);
         ctx.fill();
       }
+
+      ctx.restore();
+    }
+  }
+
+  // --- Tuxedo Duck Class (Pointy Haircut & Tuxedo, Only 1 at a time!) ---
+  class TuxedoDuck {
+    constructor(side) {
+      this.side = side;
+      this.radius = 21;
+      this.x = side === 'left' ? -30 : CANVAS_WIDTH + 30;
+      this.y = Math.random() * (CANVAS_HEIGHT - 180) + 90;
+
+      const baseSpeed = 2.6 + Math.random() * 1.0;
+      this.vx = side === 'left' ? baseSpeed : -baseSpeed;
+      this.vy = (Math.random() - 0.5) * 2.2;
+
+      this.facingRight = this.vx > 0;
+      this.wingAngle = 0;
+      this.hitFlash = 0;
+      this.active = true;
+      this.bobTime = Math.random() * 10;
+    }
+
+    update(dt) {
+      this.x += this.vx * dt * 60;
+      this.y += this.vy * dt * 60;
+      this.bobTime += dt * 3.5;
+      this.facingRight = this.vx > 0;
+      this.wingAngle = Math.sin(this.bobTime * 2);
+
+      const topBank = 24;
+      const bottomBank = CANVAS_HEIGHT - 24;
+      if (this.y - this.radius <= topBank) {
+        this.y = topBank + this.radius;
+        this.vy = Math.abs(this.vy);
+        sfx.playBounce();
+      } else if (this.y + this.radius >= bottomBank) {
+        this.y = bottomBank - this.radius;
+        this.vy = -Math.abs(this.vy);
+        sfx.playBounce();
+      }
+
+      if (this.hitFlash > 0) this.hitFlash -= dt * 4;
+
+      if (this.x < -120 || this.x > CANVAS_WIDTH + 120) {
+        this.active = false;
+      }
+    }
+
+    draw(ctx) {
+      ctx.save();
+      ctx.translate(this.x, this.y);
+      if (!this.facingRight) ctx.scale(-1, 1);
+
+      // Dignified golden/blue water shadow
+      ctx.fillStyle = 'rgba(255, 209, 102, 0.25)';
+      ctx.beginPath();
+      ctx.ellipse(0, 16, 24, 7, 0, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Tailored Black Tuxedo Jacket Body
+      ctx.fillStyle = this.hitFlash > 0 ? '#ffffff' : '#141416';
+      ctx.beginPath();
+      ctx.ellipse(-2, 4, 18, 14, 0, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Black Tuxedo Tails
+      ctx.fillStyle = '#141416';
+      ctx.beginPath();
+      ctx.moveTo(-14, 2);
+      ctx.lineTo(-24, -2);
+      ctx.lineTo(-20, 5);
+      ctx.lineTo(-25, 9);
+      ctx.lineTo(-12, 6);
+      ctx.closePath();
+      ctx.fill();
+
+      // White Dress Shirt Front (Triangle)
+      ctx.fillStyle = '#ffffff';
+      ctx.beginPath();
+      ctx.moveTo(9, -2);
+      ctx.lineTo(4, 12);
+      ctx.lineTo(-2, -2);
+      ctx.closePath();
+      ctx.fill();
+
+      // Tiny Black Buttons
+      ctx.fillStyle = '#111111';
+      ctx.beginPath();
+      ctx.arc(3.5, 4, 1, 0, Math.PI * 2);
+      ctx.arc(3.5, 8, 1, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Red Silk Bowtie
+      ctx.fillStyle = '#d90429';
+      ctx.beginPath();
+      ctx.moveTo(3.5, -2);
+      ctx.lineTo(0, -5);
+      ctx.lineTo(0, 1);
+      ctx.closePath();
+      ctx.fill();
+      ctx.beginPath();
+      ctx.moveTo(3.5, -2);
+      ctx.lineTo(7, -5);
+      ctx.lineTo(7, 1);
+      ctx.closePath();
+      ctx.fill();
+      ctx.beginPath();
+      ctx.arc(3.5, -2, 1.8, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Black Tuxedo Wing
+      ctx.save();
+      ctx.translate(-4, 2);
+      ctx.rotate(this.wingAngle * 0.22);
+      ctx.fillStyle = '#212529';
+      ctx.beginPath();
+      ctx.ellipse(0, 0, 10, 6, 0.2, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+
+      // Head (Cream / Pale Gold Duck)
+      ctx.fillStyle = this.hitFlash > 0 ? '#ffffff' : '#ffea00';
+      ctx.beginPath();
+      ctx.arc(8, -7, 11, 0, Math.PI * 2);
+      ctx.fill();
+
+      // SHARP POINTY HAIRCUT (Glossy Black Pompadour / Spiky hairdo curving up to a sharp tip!)
+      ctx.fillStyle = '#111111';
+      ctx.beginPath();
+      ctx.moveTo(1, -14);
+      ctx.quadraticCurveTo(3, -26, 13, -27); // High pointy front curve
+      ctx.lineTo(18, -25); // Sharp forward-pointing tip!
+      ctx.quadraticCurveTo(12, -19, 14, -13);
+      ctx.lineTo(2, -14);
+      ctx.closePath();
+      ctx.fill();
+
+      // Hair Gloss / Highlight Streak
+      ctx.strokeStyle = '#6c757d';
+      ctx.lineWidth = 1.3;
+      ctx.beginPath();
+      ctx.moveTo(4, -23);
+      ctx.quadraticCurveTo(8, -26, 14, -25);
+      ctx.stroke();
+
+      // Elegant Orange Bill
+      ctx.fillStyle = '#ff7b00';
+      ctx.beginPath();
+      ctx.moveTo(15, -7);
+      ctx.quadraticCurveTo(27, -5, 24, -1);
+      ctx.quadraticCurveTo(18, 0, 14, -3);
+      ctx.closePath();
+      ctx.fill();
+
+      // Cool Dark Sunglasses
+      ctx.fillStyle = '#111111';
+      ctx.beginPath();
+      ctx.roundRect(8, -11, 10, 5, 1.5);
+      ctx.fill();
+      ctx.strokeStyle = '#ffffff';
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(9, -10);
+      ctx.lineTo(12, -7);
+      ctx.stroke();
+
+      ctx.restore();
+    }
+  }
+
+  // --- Helper to Render a Guard Duck in Tactical Helmet & Dark Suit ---
+  function drawGuardDuck(ctx, x, y, facingRight, wingAngle) {
+    ctx.save();
+    ctx.translate(x, y);
+    if (!facingRight) ctx.scale(-1, 1);
+
+    // Dark Security Suit Body
+    ctx.fillStyle = '#0d1b2a';
+    ctx.beginPath();
+    ctx.ellipse(-2, 4, 15, 11, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    // White Shirt Collar & Black Tie
+    ctx.fillStyle = '#ffffff';
+    ctx.beginPath();
+    ctx.moveTo(8, -1);
+    ctx.lineTo(3, 8);
+    ctx.lineTo(-1, -1);
+    ctx.closePath();
+    ctx.fill();
+
+    ctx.fillStyle = '#000000';
+    ctx.beginPath();
+    ctx.moveTo(3.5, 0);
+    ctx.lineTo(2, 7);
+    ctx.lineTo(5, 7);
+    ctx.closePath();
+    ctx.fill();
+
+    // Wing flapping
+    ctx.save();
+    ctx.translate(-3, 2);
+    ctx.rotate(wingAngle * 0.4);
+    ctx.fillStyle = '#1b263b';
+    ctx.beginPath();
+    ctx.ellipse(0, 0, 8, 4.5, 0.2, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+
+    // Head
+    ctx.fillStyle = '#ffbe0b';
+    ctx.beginPath();
+    ctx.arc(6, -6, 10, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Orange Beak
+    ctx.fillStyle = '#ff5400';
+    ctx.beginPath();
+    ctx.moveTo(13, -6);
+    ctx.lineTo(21, -3);
+    ctx.lineTo(13, 0);
+    ctx.closePath();
+    ctx.fill();
+
+    // Agent Sunglasses
+    ctx.fillStyle = '#111111';
+    ctx.beginPath();
+    ctx.roundRect(6, -9, 8, 4.5, 1.5);
+    ctx.fill();
+
+    // TACTICAL SECURITY HELMET
+    ctx.fillStyle = '#1b263b';
+    ctx.beginPath();
+    ctx.arc(6, -8, 12, Math.PI * 0.85, Math.PI * 2.15);
+    ctx.lineTo(16, -9);
+    ctx.lineTo(-4, -9);
+    ctx.closePath();
+    ctx.fill();
+
+    // Helmet Brim & Visor
+    ctx.fillStyle = '#415a77';
+    ctx.beginPath();
+    ctx.roundRect(-3, -11, 20, 3.5, 1.5);
+    ctx.fill();
+
+    // Helmet Chin Strap
+    ctx.strokeStyle = '#0d1b2a';
+    ctx.lineWidth = 1.2;
+    ctx.beginPath();
+    ctx.moveTo(0, -7);
+    ctx.quadraticCurveTo(6, 2, 11, -5);
+    ctx.stroke();
+
+    // Gold Security Badge on Helmet
+    ctx.fillStyle = '#ffd166';
+    ctx.beginPath();
+    ctx.arc(6, -14, 2, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.restore();
+  }
+
+  // --- Arrest Escort Class (Two Helmet-&-Suit Ducks apprehend & carry duck away) ---
+  class ArrestEscort {
+    constructor(targetDuck) {
+      this.targetDuck = targetDuck;
+      this.x = targetDuck.x;
+      this.y = targetDuck.y;
+
+      // Two guards start above and swoop in
+      this.leftGuardY = this.y - 140;
+      this.rightGuardY = this.y - 140;
+      this.phase = 'swoop'; // 'swoop' -> 'lift'
+      this.timer = 0;
+      this.wingAngle = 0;
+      this.sirenFlash = 0;
+      this.finished = false;
+    }
+
+    update(dt) {
+      this.timer += dt;
+      this.wingAngle = Math.sin(this.timer * 15);
+      this.sirenFlash += dt * 10;
+
+      if (this.phase === 'swoop') {
+        // Guards dive down fast to flank the target duck
+        this.leftGuardY += (this.y - this.leftGuardY) * 0.22;
+        this.rightGuardY += (this.y - this.rightGuardY) * 0.22;
+
+        if (Math.abs(this.leftGuardY - this.y) < 6) {
+          this.leftGuardY = this.y;
+          this.rightGuardY = this.y;
+          this.phase = 'lift';
+        }
+      } else {
+        // LIFT PHASE: Both guards carry the arrested duck straight UP!
+        const liftSpeed = 5.2 * 60 * dt;
+        this.y -= liftSpeed;
+        this.leftGuardY = this.y;
+        this.rightGuardY = this.y;
+        this.targetDuck.y = this.y;
+
+        // Fully carried off screen
+        if (this.y < -80) {
+          this.finished = true;
+        }
+      }
+    }
+
+    draw(ctx) {
+      ctx.save();
+
+      // Flashing Police Beacon Glow (Red & Blue alternating)
+      const flashColor = Math.sin(this.sirenFlash) > 0 ? 'rgba(230, 57, 70, 0.45)' : 'rgba(58, 134, 255, 0.45)';
+      ctx.fillStyle = flashColor;
+      ctx.beginPath();
+      ctx.arc(this.x, this.y - 20, 32, 0, Math.PI * 2);
+      ctx.fill();
+
+      // "ARRESTED!" badge text over duck
+      ctx.fillStyle = '#ffffff';
+      ctx.font = 'bold 12px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText('🚨 APPREHENDED! 🚨', this.x, this.y - 32);
+
+      // Draw the apprehended target duck in center (with surprised eyes)
+      ctx.save();
+      ctx.translate(this.x, this.y);
+      this.targetDuck.draw(ctx);
+
+      // Funny panic sweat drop
+      ctx.fillStyle = '#00b4d8';
+      ctx.beginPath();
+      ctx.arc(14, -18, 3, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+
+      // Guard 1 (Left): Flanking and facing right
+      drawGuardDuck(ctx, this.x - 26, this.leftGuardY, true, this.wingAngle);
+
+      // Guard 2 (Right): Flanking and facing left
+      drawGuardDuck(ctx, this.x + 26, this.rightGuardY, false, this.wingAngle);
 
       ctx.restore();
     }
@@ -758,7 +1131,6 @@
     { x: 780, y: 310, size: 20, angle: 2.9, flower: false }
   ];
 
-  // Helper for safe rounded rectangles
   function drawRounded(ctx, x, y, w, h, r) {
     ctx.beginPath();
     if (typeof ctx.roundRect === 'function') {
@@ -768,7 +1140,7 @@
     }
   }
 
-  // --- Static Duck Renderer (Used on Game Canvas & Skin Previews) ---
+  // --- Static Duck Renderer (Main Duck & Skins) ---
   function renderDuck(ctx, x, y, skin, facingRight = true, squishX = 1, squishY = 1, wingAngle = 0) {
     ctx.save();
     ctx.translate(x, y);
@@ -778,13 +1150,11 @@
     }
     ctx.scale(squishX, squishY);
 
-    // Water ripple / shadow beneath duck
     ctx.fillStyle = 'rgba(224, 247, 250, 0.3)';
     ctx.beginPath();
     ctx.ellipse(0, 16, 22, 6, 0, 0, Math.PI * 2);
     ctx.fill();
 
-    // Duck Body
     const bodyGrad = ctx.createRadialGradient(2, -2, 4, 0, 4, 24);
     bodyGrad.addColorStop(0, skin.bodyGrad[0]);
     bodyGrad.addColorStop(0.7, skin.bodyGrad[1]);
@@ -794,7 +1164,6 @@
     ctx.ellipse(-2, 4, 18, 14, 0, 0, Math.PI * 2);
     ctx.fill();
 
-    // Tail Feather
     ctx.beginPath();
     ctx.moveTo(-16, 2);
     ctx.quadraticCurveTo(-24, -2, -22, -10);
@@ -802,7 +1171,6 @@
     ctx.closePath();
     ctx.fill();
 
-    // Wing
     ctx.save();
     ctx.translate(-4, 2);
     ctx.rotate(wingAngle * 0.25);
@@ -812,7 +1180,6 @@
     ctx.fill();
     ctx.restore();
 
-    // Duck Head
     const headGrad = ctx.createRadialGradient(9, -8, 2, 8, -6, 14);
     headGrad.addColorStop(0, skin.headGrad[0]);
     headGrad.addColorStop(0.8, skin.headGrad[1]);
@@ -822,7 +1189,6 @@
     ctx.arc(8, -8, 12, 0, Math.PI * 2);
     ctx.fill();
 
-    // Mallard White Neck Collar
     if (skin.collar) {
       ctx.fillStyle = '#ffffff';
       ctx.beginPath();
@@ -830,7 +1196,6 @@
       ctx.fill();
     }
 
-    // Top tuft feather (if not wearing crown or headband)
     if (!skin.crown && !skin.headband) {
       ctx.fillStyle = skin.headGrad[1];
       ctx.beginPath();
@@ -840,7 +1205,6 @@
       ctx.fill();
     }
 
-    // Ninja Headband
     if (skin.headband) {
       ctx.fillStyle = '#e63946';
       ctx.beginPath();
@@ -855,7 +1219,6 @@
       ctx.fill();
     }
 
-    // Golden Emperor Crown
     if (skin.crown) {
       ctx.fillStyle = '#ffbe0b';
       ctx.beginPath();
@@ -870,14 +1233,12 @@
       ctx.lineWidth = 1;
       ctx.stroke();
 
-      // Ruby Jewel
       ctx.fillStyle = '#e63946';
       ctx.beginPath();
       ctx.arc(7, -20, 2, 0, Math.PI * 2);
       ctx.fill();
     }
 
-    // Duck Bill / Beak
     ctx.fillStyle = skin.billColor;
     ctx.beginPath();
     ctx.moveTo(16, -9);
@@ -886,7 +1247,6 @@
     ctx.closePath();
     ctx.fill();
 
-    // Flamingo Black Bill Tip
     if (skin.billTip) {
       ctx.fillStyle = skin.billTip;
       ctx.beginPath();
@@ -897,7 +1257,6 @@
       ctx.fill();
     }
 
-    // Cyber Visor
     if (skin.visor) {
       ctx.fillStyle = '#00f5d4';
       ctx.shadowColor = '#00f5d4';
@@ -907,7 +1266,6 @@
       ctx.fill();
       ctx.shadowBlur = 0;
     } else if (skin.sunglasses) {
-      // Cool Sunglasses
       ctx.fillStyle = '#111111';
       ctx.beginPath();
       ctx.roundRect(8, -13, 10, 6, 1.5);
@@ -919,13 +1277,11 @@
       ctx.lineTo(13, -8);
       ctx.stroke();
     } else {
-      // Standard Eye
       ctx.fillStyle = '#ffffff';
       ctx.beginPath();
       ctx.arc(12, -10, 4, 0, Math.PI * 2);
       ctx.fill();
 
-      // Pupil
       ctx.fillStyle = skin.eyeColor;
       if (skin.eyeGlow) {
         ctx.shadowColor = skin.eyeColor;
@@ -936,7 +1292,6 @@
       ctx.fill();
       ctx.shadowBlur = 0;
 
-      // Sparkle
       ctx.fillStyle = '#ffffff';
       ctx.beginPath();
       ctx.arc(14, -11, 0.9, 0, Math.PI * 2);
@@ -967,6 +1322,8 @@
       this.activeSkinNameEl = document.getElementById('activeSkinName');
       this.normalDuckCountEl = document.getElementById('normalDuckCount');
       this.evilDuckCountEl = document.getElementById('evilDuckCount');
+      this.tuxedoStatusEl = document.getElementById('tuxedoStatus');
+      this.tuxedoBadgeEl = document.getElementById('tuxedoBadge');
 
       // Overlay Elements
       this.overlay = document.getElementById('gameOverlay');
@@ -994,7 +1351,7 @@
       this.botScore = 0;
       this.rally = 0;
       this.bestRally = 0;
-      this.state = 'MENU'; // 'MENU', 'PLAYING', 'PAUSED', 'GAMEOVER'
+      this.state = 'MENU';
       this.difficulty = 'medium';
 
       // Objects
@@ -1002,6 +1359,13 @@
       this.sideDucks = [];
       this.sideSpawnTimer = 0;
       this.nextSideSpawnDelay = 4.0;
+
+      // Tuxedo Duck & Escort System (strictly 1 at a time!)
+      this.tuxedoDuck = null;
+      this.tuxedoSpawnTimer = 0;
+      this.nextTuxedoSpawnDelay = 8.0;
+      this.arrestEscorts = [];
+
       this.time = 0;
 
       // Player Paddle
@@ -1026,7 +1390,7 @@
         hitFlash: 0
       };
 
-      // Main Duck
+      // Main Duck (The duck you play the game with!)
       this.duck = {
         x: CANVAS_WIDTH / 2,
         y: CANVAS_HEIGHT / 2,
@@ -1049,7 +1413,6 @@
       this.render();
     }
 
-    // --- Persistence Handlers ---
     loadPoints() {
       const stored = localStorage.getItem('duckPong_points');
       if (stored !== null) {
@@ -1110,7 +1473,6 @@
       this.skinUnlockedCountEl.textContent = `${unlockedCount}/${totalSkins}`;
     }
 
-    // --- Events & Inputs (Zero Scroll Glitch) ---
     initEvents() {
       const updateMousePos = (clientY) => {
         const rect = this.canvas.getBoundingClientRect();
@@ -1138,7 +1500,6 @@
         }
       });
 
-      // KEYBOARD: Prevent default browser page scrolling on Arrow keys and Space
       window.addEventListener('keydown', (e) => {
         if (['ArrowUp', 'ArrowDown', 'Space', 'KeyW', 'KeyS'].includes(e.code)) {
           e.preventDefault();
@@ -1218,7 +1579,6 @@
       }
     }
 
-    // --- Skins Closet Modal ---
     openSkins() {
       sfx.init();
       if (this.state === 'PLAYING') {
@@ -1285,7 +1645,6 @@
       });
     }
 
-    // --- Game Lifecycle ---
     startGame() {
       this.playerScore = 0;
       this.botScore = 0;
@@ -1341,10 +1700,16 @@
       this.rallyCountEl.textContent = '0';
       this.spawnWaterSplash(this.duck.x, this.duck.y, 8);
 
-      // Reset side ducks timers for the new rally
+      // Reset side ducks and tuxedo duck on serve
       this.sideDucks = [];
       this.sideSpawnTimer = 0;
       this.nextSideSpawnDelay = 3.5;
+
+      this.tuxedoDuck = null;
+      this.tuxedoSpawnTimer = 0;
+      this.nextTuxedoSpawnDelay = 7.0;
+      this.arrestEscorts = [];
+
       this.updateScoreboard();
     }
 
@@ -1383,9 +1748,18 @@
         this.normalDuckCountEl.textContent = normalCount;
         this.evilDuckCountEl.textContent = evilCount;
       }
+
+      if (this.tuxedoStatusEl && this.tuxedoBadgeEl) {
+        const hasTuxedo = this.tuxedoDuck !== null;
+        this.tuxedoStatusEl.textContent = hasTuxedo ? '1 VIP' : '0';
+        if (hasTuxedo) {
+          this.tuxedoBadgeEl.classList.add('active');
+        } else {
+          this.tuxedoBadgeEl.classList.remove('active');
+        }
+      }
     }
 
-    // --- End Match & Point Calculation based on Margin ---
     checkMatchEnd() {
       if (this.playerScore >= WINNING_SCORE || this.botScore >= WINNING_SCORE) {
         this.state = 'GAMEOVER';
@@ -1448,15 +1822,15 @@
         this.actionBtn.textContent = 'Play Again';
         this.overlay.classList.remove('hidden');
 
-        // Clear side ducks on match end
         this.sideDucks = [];
+        this.tuxedoDuck = null;
+        this.arrestEscorts = [];
         this.updateScoreboard();
         return true;
       }
       return false;
     }
 
-    // --- Main Game Loop ---
     gameLoop(now) {
       const dt = Math.min((now - this.lastFrameTime) / 1000, 0.1);
       this.lastFrameTime = now;
@@ -1504,7 +1878,7 @@
       }
       this.bot.y = Math.max(10, Math.min(CANVAS_HEIGHT - this.bot.height - 10, this.bot.y));
 
-      // 3. Main Duck Physics
+      // 3. Main Duck Physics (The duck you play the game with!)
       this.duck.x += this.duck.vx;
       this.duck.y += this.duck.vy;
 
@@ -1517,7 +1891,6 @@
         this.particles.push(new Particle(this.duck.x, this.duck.y, 'sparkle', skin.particleColor));
       }
 
-      // Main Duck Wall bounces
       const topBank = 22;
       const bottomBank = CANVAS_HEIGHT - 22;
       if (this.duck.y - this.duck.radius <= topBank) {
@@ -1536,7 +1909,7 @@
         this.spawnWaterSplash(this.duck.x, this.duck.y, 4);
       }
 
-      // 4. Main Duck Paddle Collision: Player
+      // 4. Main Duck Paddle Collisions
       const pRight = this.player.x + this.player.width;
       const pTop = this.player.y;
       const pBottom = this.player.y + this.player.height;
@@ -1551,7 +1924,6 @@
         this.handlePaddleHit(this.player, 1);
       }
 
-      // Main Duck Paddle Collision: Bot
       const bLeft = this.bot.x;
       const bTop = this.bot.y;
       const bBottom = this.bot.y + this.bot.height;
@@ -1566,13 +1938,12 @@
         this.handlePaddleHit(this.bot, -1);
       }
 
-      // 5. SIDE DUCKS: Spawn slowly from the sides (both normal and evil ducks!)
+      // 5. SIDE DUCKS SPAWNER (Normal & Evil Ducks)
       this.sideSpawnTimer += dt;
       if (this.sideSpawnTimer >= this.nextSideSpawnDelay && this.sideDucks.length < 5) {
         this.sideSpawnTimer = 0;
-        this.nextSideSpawnDelay = 4.5 + Math.random() * 3.5; // Next duck in 4.5 - 8 seconds
+        this.nextSideSpawnDelay = 4.5 + Math.random() * 3.5;
         const side = Math.random() < 0.5 ? 'left' : 'right';
-        // 50% chance of Normal friendly duck, 50% chance of Spinning Evil duck!
         const isEvil = Math.random() < 0.5;
         const newSideDuck = new SideDuck(side, isEvil);
         this.sideDucks.push(newSideDuck);
@@ -1586,17 +1957,130 @@
         this.updateScoreboard();
       }
 
-      // 6. SIDE DUCKS: Update, Collisions & Interactions
+      // 6. TUXEDO DUCK SPAWNER (Strictly ONLY ONE at a time!)
+      if (this.tuxedoDuck === null) {
+        this.tuxedoSpawnTimer += dt;
+        if (this.tuxedoSpawnTimer >= this.nextTuxedoSpawnDelay) {
+          this.tuxedoSpawnTimer = 0;
+          this.nextTuxedoSpawnDelay = 14.0 + Math.random() * 8.0;
+          const side = Math.random() < 0.5 ? 'left' : 'right';
+          this.tuxedoDuck = new TuxedoDuck(side);
+          sfx.playSuaveQuack();
+          this.spawnWaterSplash(this.tuxedoDuck.x, this.tuxedoDuck.y, 8);
+          this.updateScoreboard();
+        }
+      } else {
+        // Update Tuxedo Duck
+        this.tuxedoDuck.update(dt);
+        if (!this.tuxedoDuck.active) {
+          this.tuxedoDuck = null;
+          this.tuxedoSpawnTimer = 0;
+          this.nextTuxedoSpawnDelay = 12.0 + Math.random() * 6.0;
+          this.updateScoreboard();
+        } else {
+          // Tuxedo Duck Paddle Collisions
+          if (
+            this.tuxedoDuck.vx < 0 &&
+            this.tuxedoDuck.x - this.tuxedoDuck.radius <= pRight &&
+            this.tuxedoDuck.x + this.tuxedoDuck.radius >= this.player.x &&
+            this.tuxedoDuck.y >= pTop - 10 &&
+            this.tuxedoDuck.y <= pBottom + 10
+          ) {
+            this.tuxedoDuck.vx = Math.abs(this.tuxedoDuck.vx) * 1.05 + 0.3;
+            this.tuxedoDuck.hitFlash = 1.0;
+            this.player.hitFlash = 1.0;
+            sfx.playPaddleHit();
+            sfx.playSuaveQuack();
+          }
+
+          if (
+            this.tuxedoDuck.vx > 0 &&
+            this.tuxedoDuck.x + this.tuxedoDuck.radius >= bLeft &&
+            this.tuxedoDuck.x - this.tuxedoDuck.radius <= bLeft + this.bot.width &&
+            this.tuxedoDuck.y >= bTop - 10 &&
+            this.tuxedoDuck.y <= bBottom + 10
+          ) {
+            this.tuxedoDuck.vx = -Math.abs(this.tuxedoDuck.vx) * 1.05 - 0.3;
+            this.tuxedoDuck.hitFlash = 1.0;
+            this.bot.hitFlash = 1.0;
+            sfx.playPaddleHit();
+            sfx.playSuaveQuack();
+          }
+
+          // EXEMPTION: Tuxedo Duck vs Main Duck (the duck you play with)
+          // Main duck is immune to arrest! They just bounce off each other normally.
+          const tdx = this.duck.x - this.tuxedoDuck.x;
+          const tdy = this.duck.y - this.tuxedoDuck.y;
+          const tdist = Math.hypot(tdx, tdy);
+          const tMinDist = this.duck.radius + this.tuxedoDuck.radius;
+
+          if (tdist < tMinDist && tdist > 0) {
+            const tnx = tdx / tdist;
+            const tny = tdy / tdist;
+            const toverlap = tMinDist - tdist;
+            this.duck.x += tnx * toverlap * 0.5;
+            this.duck.y += tny * toverlap * 0.5;
+            this.tuxedoDuck.x -= tnx * toverlap * 0.5;
+            this.tuxedoDuck.y -= tny * toverlap * 0.5;
+
+            const tkx = this.duck.vx - this.tuxedoDuck.vx;
+            const tky = this.duck.vy - this.tuxedoDuck.vy;
+            const tp = 2 * (tnx * tkx + tny * tky) / 2;
+            this.duck.vx -= tp * tnx * 0.85;
+            this.duck.vy -= tp * tny * 0.85;
+            this.tuxedoDuck.vx += tp * tnx * 0.85;
+            this.tuxedoDuck.vy += tp * tny * 0.85;
+
+            this.duck.facingRight = this.duck.vx > 0;
+            this.tuxedoDuck.hitFlash = 1.0;
+            sfx.playPaddleHit();
+            sfx.playSuaveQuack();
+            this.triggerQuackWave(this.tuxedoDuck.x, this.tuxedoDuck.y, '#ffd166');
+          }
+
+          // ARREST TRIGGER: Whatever OTHER duck the Tuxedo Duck touches
+          // will be taken away by two ducks wearing helmets and suits!
+          for (let i = this.sideDucks.length - 1; i >= 0; i--) {
+            const sideDuck = this.sideDucks[i];
+            const adx = sideDuck.x - this.tuxedoDuck.x;
+            const ady = sideDuck.y - this.tuxedoDuck.y;
+            const adist = Math.hypot(adx, ady);
+            if (adist < sideDuck.radius + this.tuxedoDuck.radius) {
+              // Apprehend this duck!
+              this.arrestEscorts.push(new ArrestEscort(sideDuck));
+              this.sideDucks.splice(i, 1);
+              sfx.playPoliceSiren();
+              sfx.playSuaveQuack();
+              this.triggerQuackWave(this.tuxedoDuck.x, this.tuxedoDuck.y, '#ffd166');
+              this.updateScoreboard();
+              break;
+            }
+          }
+        }
+      }
+
+      // 7. UPDATE ARREST ESCORTS (Helmet-&-Suit ducks taking duck away)
+      for (let i = this.arrestEscorts.length - 1; i >= 0; i--) {
+        const escort = this.arrestEscorts[i];
+        escort.update(dt);
+        if (escort.finished) {
+          this.points += 20;
+          this.updatePointsUI(20);
+          this.spawnFeathers(escort.x, 25, 6, '#ffd700');
+          this.arrestEscorts.splice(i, 1);
+        }
+      }
+
+      // 8. SIDE DUCKS: Update, Collisions & Interactions
       for (let i = 0; i < this.sideDucks.length; i++) {
         const duck = this.sideDucks[i];
         duck.update(dt);
 
-        // Particle trail
         if (Math.random() < 0.22) {
           this.particles.push(new Particle(duck.x, duck.y, 'sparkle', duck.isEvil ? '#ef233c' : '#ffd166'));
         }
 
-        // A. Side Duck vs Player Paddle
+        // A. Paddle Hits
         if (
           duck.vx < 0 &&
           duck.x - duck.radius <= pRight &&
@@ -1621,12 +2105,10 @@
             this.spawnFeathers(duck.x, duck.y, 4, '#ffbe0b');
           }
 
-          // Bonus points for hitting side ducks!
           this.points += 5;
           this.updatePointsUI(5);
         }
 
-        // B. Side Duck vs Bot Paddle
         if (
           duck.vx > 0 &&
           duck.x + duck.radius >= bLeft &&
@@ -1650,7 +2132,7 @@
           }
         }
 
-        // C. Side Duck vs Main Duck Mid-Air Collision!
+        // B. Side Duck vs Main Duck Collision
         const dx = this.duck.x - duck.x;
         const dy = this.duck.y - duck.y;
         const dist = Math.hypot(dx, dy);
@@ -1695,7 +2177,7 @@
           }
         }
 
-        // D. Side Duck vs Side Duck Collision!
+        // C. Side Duck vs Side Duck Collision
         for (let j = i + 1; j < this.sideDucks.length; j++) {
           const other = this.sideDucks[j];
           const sdx = other.x - duck.x;
@@ -1728,7 +2210,7 @@
           }
         }
 
-        // E. Out of bounds: crossing past bot awards banish / rescue bonus!
+        // D. Out of bounds
         if (duck.x > CANVAS_WIDTH + 45) {
           this.points += 15;
           this.updatePointsUI(15);
@@ -1739,14 +2221,13 @@
         }
       }
 
-      // Remove inactive side ducks
       const prevCount = this.sideDucks.length;
       this.sideDucks = this.sideDucks.filter(e => e.active);
       if (prevCount !== this.sideDucks.length) {
         this.updateScoreboard();
       }
 
-      // 7. Main Duck Scoring
+      // 9. Main Duck Scoring
       if (this.duck.x < -40) {
         this.botScore++;
         sfx.playSplash();
@@ -1763,7 +2244,7 @@
         }
       }
 
-      // 8. Update Particles
+      // 10. Update Particles
       for (let i = this.particles.length - 1; i >= 0; i--) {
         if (!this.particles[i].update()) {
           this.particles.splice(i, 1);
@@ -1806,7 +2287,6 @@
       this.spawnWaterSplash(this.duck.x, this.duck.y, 4);
     }
 
-    // --- Render Pipeline ---
     render() {
       const ctx = this.ctx;
       ctx.clearRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
@@ -1816,7 +2296,23 @@
       this.drawCenterNet(ctx);
       this.drawParticles(ctx);
       this.drawPaddles(ctx);
-      this.drawSideDucks(ctx);
+
+      // Draw Side Ducks (Normal & Evil)
+      for (let i = 0; i < this.sideDucks.length; i++) {
+        this.sideDucks[i].draw(ctx);
+      }
+
+      // Draw Tuxedo Duck (Only 1 at a time!)
+      if (this.tuxedoDuck !== null) {
+        this.tuxedoDuck.draw(ctx);
+      }
+
+      // Draw Escort Ducks (Ducks in Helmets and Suits arresting targets)
+      for (let i = 0; i < this.arrestEscorts.length; i++) {
+        this.arrestEscorts[i].draw(ctx);
+      }
+
+      // Draw Main Game Duck
       this.drawCurrentDuck(ctx);
     }
 
@@ -1828,7 +2324,6 @@
       ctx.fillStyle = waterGrad;
       ctx.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
 
-      // Waves
       ctx.save();
       ctx.strokeStyle = 'rgba(255, 255, 255, 0.08)';
       ctx.lineWidth = 2;
@@ -1845,7 +2340,6 @@
       }
       ctx.restore();
 
-      // Wooden dock
       ctx.fillStyle = '#5d4037';
       ctx.fillRect(0, 0, CANVAS_WIDTH, 14);
       ctx.fillRect(0, CANVAS_HEIGHT - 14, CANVAS_WIDTH, 14);
@@ -1949,12 +2443,6 @@
 
       drawSinglePaddle(this.player, true);
       drawSinglePaddle(this.bot, false);
-    }
-
-    drawSideDucks(ctx) {
-      for (let i = 0; i < this.sideDucks.length; i++) {
-        this.sideDucks[i].draw(ctx);
-      }
     }
 
     drawCurrentDuck(ctx) {

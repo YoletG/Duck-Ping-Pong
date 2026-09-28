@@ -36,6 +36,18 @@ As rallies unfold, ducks slowly flow into the pond from the left and right sides
 
 ---
 
+### 🤵 Tuxedo Duck & 🪖 Secret Service Escort Ducks
+Watch out for the mysterious **VIP Tuxedo Boss Duck**:
+- **Dapper Style:** Wears a tailored black tuxedo with silk tails, crisp white dress shirt, red bow tie, dark shades, and a sharp slick **pointy haircut**!
+- **Strictly One at a Time:** Only **one** Tuxedo Duck can ever appear in the pond at any given time.
+- **The Bodyguard Law:**
+  - **Your Game Ball is EXEMPT:** If the Tuxedo Duck touches the main ball duck you are playing with, they bounce off each other normally.
+  - **Any OTHER Duck is ARRESTED:** Whatever other duck the Tuxedo Duck touches (Normal duck or Evil duck) will immediately be apprehended!
+  - **Two Ducks in Helmets & Suits:** A pair of tactical security ducks wearing SWAT helmets and dark suits swoop down from above with flashing police lights (`🚨`), grasp the target duck on both sides, and carry it straight up into the sky (`+20 ⭐ Arrest Bonus!`).
+  - **Audio:** Features suave dapper quacks and a comical two-tone police siren!
+
+---
+
 ### ⭐ Margin-Based Points & Rating System
 Your points update after each round based on **how much you win by or lose by**:
 
