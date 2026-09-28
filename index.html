@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>Duck Ping Pong 🦆🏓</title>
+  <link rel="stylesheet" href="style.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&family=Lilita+One&display=swap" rel="stylesheet">
+</head>
+<body>
+  <div class="game-container">
+    <!-- Header -->
+    <header class="game-header">
+      <div class="title-container">
+        <span class="duck-icon">🦆</span>
+        <h1>Duck Ping Pong</h1>
+        <span class="paddle-icon">🏓</span>
+      </div>
+      <div class="controls-bar">
+        <div class="difficulty-select">
+          <label for="difficulty">Bot Level:</label>
+          <select id="difficulty">
+            <option value="easy">Casual Duckling</option>
+            <option value="medium" selected>Pond Pro</option>
+            <option value="hard">Mallard Master</option>
+          </select>
+        </div>
+        <button id="soundToggle" class="btn btn-icon" title="Toggle Sound">🔊 Sound</button>
+        <button id="pauseBtn" class="btn btn-icon" title="Pause Game (P)">⏸ Pause</button>
+      </div>
+    </header>
+
+    <!-- Scoreboard -->
+    <div class="scoreboard">
+      <div class="score-card player-card">
+        <div class="player-info">
+          <span class="avatar">🧑</span>
+          <span class="player-name">Player</span>
+        </div>
+        <span id="playerScore" class="score-num">0</span>
+      </div>
+
+      <div class="rally-counter">
+        <span class="rally-label">RALLY</span>
+        <span id="rallyCount" class="rally-num">0</span>
+      </div>
+
+      <div class="score-card bot-card">
+        <span id="botScore" class="score-num">0</span>
+        <div class="player-info">
+          <span class="player-name">Robo-Duck</span>
+          <span class="avatar">🤖</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Canvas Stage -->
+    <div class="canvas-wrapper">
+      <canvas id="gameCanvas" width="900" height="560"></canvas>
+
+      <!-- Overlay for Start / Pause / Game Over -->
+      <div id="gameOverlay" class="game-overlay">
+        <div class="overlay-card">
+          <div id="overlayDuck" class="overlay-mascot">🦆</div>
+          <h2 id="overlayTitle">Duck Ping Pong</h2>
+          <p id="overlayMessage">Bounce the duck across the pond! Don't let it slip past your paddle.</p>
+          <div class="tips-box">
+            <p><strong>Controls:</strong> Move Mouse or Touch & Drag, or use <strong>W/S</strong> / <strong>↑/↓</strong> Arrow Keys</p>
+          </div>
+          <button id="actionBtn" class="btn btn-primary">Start Game</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Footer Controls & Info -->
+    <footer class="game-footer">
+      <div class="instruction-tag">🎮 <span>Mouse / Touch or <strong>W/S</strong> / <strong>↑/↓</strong> to move paddle</span></div>
+      <div class="instruction-tag">🎯 <span>First to 7 wins the trophy</span></div>
+      <div class="instruction-tag">🔊 <span>Audio synthesized with Web Audio API</span></div>
+    </footer>
+  </div>
+
+  <script src="game.js"></script>
+</body>
+</html>
