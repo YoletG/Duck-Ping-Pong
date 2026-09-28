@@ -21,6 +21,7 @@
   const PADDLE_WIDTH = 18;
   const PADDLE_HEIGHT = 100;
   const PADDLE_INSET = 35;
+  const MAX_SIDE_DUCKS = 18;
 
   // --- Duck Skins Catalog ---
   const SKINS = {
@@ -147,6 +148,7 @@
     constructor() {
       this.ctx = null;
       this.muted = false;
+      this.lastBounceTime = 0;
     }
 
     init() {
@@ -382,6 +384,8 @@
       if (!this.ctx) return;
 
       const now = this.ctx.currentTime;
+      if (this.lastBounceTime && now - this.lastBounceTime < 0.04) return;
+      this.lastBounceTime = now;
       const osc = this.ctx.createOscillator();
       const gain = this.ctx.createGain();
 
@@ -1537,7 +1541,8 @@
       this.particles = [];
       this.sideDucks = [];
       this.sideSpawnTimer = 0;
-      this.nextSideSpawnDelay = 4.0;
+      this.nextSideSpawnDelay = 0.8;
+      this.lastSideEntranceSound = 0;
 
       // Tuxedo Duck & Escort System (strictly 1 at a time!)
       this.tuxedoDuck = null;
@@ -1829,6 +1834,7 @@
       this.botScore = 0;
       this.rally = 0;
       this.bestRally = 0;
+      this.sideDucks = [];
       this.updateScoreboard();
 
       this.resultBreakdown.classList.add('hidden');
@@ -1879,10 +1885,22 @@
       this.rallyCountEl.textContent = '0';
       this.spawnWaterSplash(this.duck.x, this.duck.y, 8);
 
-      // Reset side ducks and tuxedo duck on serve
-      this.sideDucks = [];
+      // Maintain duck flood across serves (keep existing ducks and flood in a new wave!)
+      if (this.sideDucks.length > 10) {
+        this.sideDucks = this.sideDucks.slice(-10);
+      }
       this.sideSpawnTimer = 0;
-      this.nextSideSpawnDelay = 3.5;
+      this.nextSideSpawnDelay = 0.6;
+
+      // Flood in a starting wave of ducks on serve
+      const initialSurge = Math.min(3, MAX_SIDE_DUCKS - this.sideDucks.length);
+      for (let w = 0; w < initialSurge; w++) {
+        const side = Math.random() < 0.5 ? 'left' : 'right';
+        const isEvil = Math.random() < 0.45;
+        const surgeDuck = new SideDuck(side, isEvil);
+        surgeDuck.x += (side === 'left' ? -w * 32 : w * 32);
+        this.sideDucks.push(surgeDuck);
+      }
 
       this.tuxedoDuck = null;
       this.tuxedoSpawnTimer = 0;
@@ -2123,23 +2141,45 @@
         this.handlePaddleHit(this.bot, -1);
       }
 
-      // 5. SIDE DUCKS SPAWNER (Normal & Evil Ducks)
+      // 5. SIDE DUCKS SPAWNER (CONTINUOUS DUCK FLOOD: Normal & Evil Ducks)
       this.sideSpawnTimer += dt;
-      if (this.sideSpawnTimer >= this.nextSideSpawnDelay && this.sideDucks.length < 5) {
+      if (this.sideSpawnTimer >= this.nextSideSpawnDelay && this.sideDucks.length < MAX_SIDE_DUCKS) {
         this.sideSpawnTimer = 0;
-        this.nextSideSpawnDelay = 4.5 + Math.random() * 3.5;
-        const side = Math.random() < 0.5 ? 'left' : 'right';
-        const isEvil = Math.random() < 0.5;
-        const newSideDuck = new SideDuck(side, isEvil);
-        this.sideDucks.push(newSideDuck);
+        // Rapid cadence (every 0.7s to 1.5s) for a true duck flood!
+        this.nextSideSpawnDelay = 0.7 + Math.random() * 0.8;
 
-        if (isEvil) {
-          sfx.playEvilEntrance();
-        } else {
-          sfx.playQuack(1.1, 'classic');
+        // Flood in: spawn 1 to 3 ducks in rapid waves
+        const waveCount = Math.random() < 0.5 ? 2 : (Math.random() < 0.2 ? 3 : 1);
+        let spawnedAny = false;
+        let hasEvil = false;
+
+        for (let s = 0; s < waveCount && this.sideDucks.length < MAX_SIDE_DUCKS; s++) {
+          // Stream in from left, right, or alternating sides
+          const side = (s === 1 && Math.random() < 0.7)
+            ? (this.sideDucks.length > 0 && this.sideDucks[this.sideDucks.length - 1].side === 'left' ? 'right' : 'left')
+            : (Math.random() < 0.5 ? 'left' : 'right');
+          const isEvil = Math.random() < 0.45;
+          if (isEvil) hasEvil = true;
+
+          const newSideDuck = new SideDuck(side, isEvil);
+          // Stagger spawn x coordinate slightly so they enter in a natural stream
+          newSideDuck.x += (side === 'left' ? -s * 32 : s * 32);
+          this.sideDucks.push(newSideDuck);
+          this.spawnWaterSplash(newSideDuck.x, newSideDuck.y, 5);
+          spawnedAny = true;
         }
-        this.spawnWaterSplash(newSideDuck.x, newSideDuck.y, 6);
-        this.updateScoreboard();
+
+        if (spawnedAny) {
+          if (!this.lastSideEntranceSound || (this.time - this.lastSideEntranceSound > 0.4)) {
+            this.lastSideEntranceSound = this.time;
+            if (hasEvil) {
+              sfx.playEvilEntrance();
+            } else {
+              sfx.playQuack(1.1, 'classic');
+            }
+          }
+          this.updateScoreboard();
+        }
       }
 
       // 6. TUXEDO DUCK SPAWNER (Strictly ONLY ONE at a time!)
@@ -2147,7 +2187,7 @@
         this.tuxedoSpawnTimer += dt;
         if (this.tuxedoSpawnTimer >= this.nextTuxedoSpawnDelay) {
           this.tuxedoSpawnTimer = 0;
-          this.nextTuxedoSpawnDelay = 14.0 + Math.random() * 8.0;
+          this.nextTuxedoSpawnDelay = 10.0 + Math.random() * 6.0;
           const side = Math.random() < 0.5 ? 'left' : 'right';
           this.tuxedoDuck = new TuxedoDuck(side);
           sfx.playSuaveQuack();
