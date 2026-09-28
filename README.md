@@ -38,13 +38,14 @@ As rallies unfold, ducks **flood in continuously** from both sides in rapid stre
 
 ---
 
-### 🤵 Tuxedo Duck & 🪖 Secret Service Escort Ducks
-Watch out for the mysterious **VIP Tuxedo Boss Duck**:
+### 🤵 The Trump Duck & 🪖 Secret Service Escort Ducks
+Watch out for the distinguished **The Trump Duck**:
 - **Dapper Style:** Wears a tailored black tuxedo with silk tails, crisp white dress shirt, red bow tie, dark shades, and a sharp slick **blonde haircut that leans forward**!
-- **Strictly One at a Time:** Only **one** Tuxedo Duck can ever appear in the pond at any given time.
+- **Floating Nametag:** Displays a prominent gold-gilded **"THE TRUMP DUCK"** nametag as it navigates the pond.
+- **Strictly One at a Time:** Only **one** The Trump Duck can ever appear in the pond at any given time.
 - **The Bodyguard Law:**
-  - **Your Game Ball is EXEMPT:** If the Tuxedo Duck touches the main ball duck you are playing with, they bounce off each other normally.
-  - **Any OTHER Duck is ARRESTED:** Whatever other duck the Tuxedo Duck touches (Normal duck or Evil duck) will immediately be apprehended!
+  - **Your Game Ball is EXEMPT:** If The Trump Duck touches the main ball duck you are playing with, they bounce off each other normally.
+  - **Any OTHER Duck is ARRESTED:** Whatever other duck The Trump Duck touches (Normal duck or Evil duck) will immediately be apprehended!
   - **Two Ducks in Helmets & Suits:** A pair of tactical security ducks wearing SWAT helmets and dark suits swoop down from above with flashing police lights (`🚨`), grasp the target duck on both sides, and carry it straight up into the sky (`+20 ⭐ Arrest Bonus!`).
   - **Audio:** Features suave dapper quacks and a comical two-tone police siren!
 

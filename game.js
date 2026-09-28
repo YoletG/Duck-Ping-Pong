@@ -842,7 +842,7 @@
     }
   }
 
-  // --- Tuxedo Duck Class (Forward-Leaning Blonde Hair & Tuxedo, Only 1 at a time!) ---
+  // --- The Trump Duck Class (Forward-Leaning Blonde Hair & Tuxedo, Only 1 at a time!) ---
   class TuxedoDuck {
     constructor(side) {
       this.side = side;
@@ -1065,7 +1065,35 @@
       ctx.moveTo(9, -10);
       ctx.lineTo(12, -7);
       ctx.stroke();
+      ctx.restore();
 
+      // "THE TRUMP DUCK" Gold Floating Nametag
+      ctx.save();
+      ctx.translate(this.x, this.y);
+      ctx.font = 'bold 9.5px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      const labelText = 'THE TRUMP DUCK';
+      const textMetrics = ctx.measureText(labelText);
+      const boxW = textMetrics.width + 12;
+      const boxH = 16;
+      const boxY = -34;
+
+      // Dark glass container with gold border
+      ctx.fillStyle = 'rgba(15, 18, 28, 0.88)';
+      ctx.beginPath();
+      ctx.roundRect(-boxW / 2, boxY, boxW, boxH, 6);
+      ctx.fill();
+
+      ctx.strokeStyle = '#ffd166';
+      ctx.lineWidth = 1.1;
+      ctx.stroke();
+
+      // Golden text
+      ctx.fillStyle = '#ffd166';
+      ctx.shadowColor = 'rgba(255, 209, 102, 0.6)';
+      ctx.shadowBlur = 4;
+      ctx.fillText(labelText, 0, boxY + boxH / 2);
       ctx.restore();
     }
   }
@@ -1219,11 +1247,15 @@
       ctx.arc(this.x, this.y - 20, 32, 0, Math.PI * 2);
       ctx.fill();
 
-      // "ARRESTED!" badge text over duck
+      // "APPREHENDED!" badge text over duck
       ctx.fillStyle = '#ffffff';
       ctx.font = 'bold 12px sans-serif';
       ctx.textAlign = 'center';
-      ctx.fillText('🚨 APPREHENDED! 🚨', this.x, this.y - 32);
+      ctx.fillText('🚨 APPREHENDED! 🚨', this.x, this.y - 34);
+
+      ctx.font = 'bold 9.5px sans-serif';
+      ctx.fillStyle = '#ffd166';
+      ctx.fillText('By The Trump Duck', this.x, this.y - 20);
 
       // Draw the apprehended target duck in center (with surprised eyes)
       ctx.save();
@@ -2037,7 +2069,7 @@
 
       if (this.tuxedoStatusEl && this.tuxedoBadgeEl) {
         const hasTuxedo = this.tuxedoDuck !== null;
-        this.tuxedoStatusEl.textContent = hasTuxedo ? '1 VIP' : '0';
+        this.tuxedoStatusEl.textContent = hasTuxedo ? '1 Trump Duck' : '0';
         if (hasTuxedo) {
           this.tuxedoBadgeEl.classList.add('active');
         } else {
