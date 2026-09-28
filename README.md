@@ -39,7 +39,7 @@ As rallies unfold, ducks slowly flow into the pond from the left and right sides
 
 ### 🤵 Tuxedo Duck & 🪖 Secret Service Escort Ducks
 Watch out for the mysterious **VIP Tuxedo Boss Duck**:
-- **Dapper Style:** Wears a tailored black tuxedo with silk tails, crisp white dress shirt, red bow tie, dark shades, and a sharp slick **pointy haircut**!
+- **Dapper Style:** Wears a tailored black tuxedo with silk tails, crisp white dress shirt, red bow tie, dark shades, and a sharp slick **blonde haircut that leans forward**!
 - **Strictly One at a Time:** Only **one** Tuxedo Duck can ever appear in the pond at any given time.
 - **The Bodyguard Law:**
   - **Your Game Ball is EXEMPT:** If the Tuxedo Duck touches the main ball duck you are playing with, they bounce off each other normally.

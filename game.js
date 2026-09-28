@@ -3,7 +3,7 @@
  * A retro arcade pond game where you rally a duck against an AI bot paddle.
  * Includes multiple duck skins, persistent points, margin-based rewards,
  * normal friendly ducks & spinning red evil ducks flowing in from the sides,
- * a Tuxedo Duck with a pointy haircut (only 1 at a time!),
+ * a Tuxedo Duck with forward-leaning blonde hair (only 1 at a time!),
  * and two Helmet-&-Suit Security Ducks that arrest any duck it touches!
  */
 
@@ -797,7 +797,7 @@
     }
   }
 
-  // --- Tuxedo Duck Class (Pointy Haircut & Tuxedo, Only 1 at a time!) ---
+  // --- Tuxedo Duck Class (Forward-Leaning Blonde Hair & Tuxedo, Only 1 at a time!) ---
   class TuxedoDuck {
     constructor(side) {
       this.side = side;
@@ -920,24 +920,85 @@
       ctx.arc(8, -7, 11, 0, Math.PI * 2);
       ctx.fill();
 
-      // SHARP POINTY HAIRCUT (Glossy Black Pompadour / Spiky hairdo curving up to a sharp tip!)
-      ctx.fillStyle = '#111111';
+      // FORWARD-LEANING BLONDE HAIRCUT (Voluminous golden blonde quiff / swoosh leaning boldly forward)
+      ctx.save();
+      const blondeGrad = ctx.createLinearGradient(0, -26, 26, -16);
+      blondeGrad.addColorStop(0, '#fff3b0');  // Pale sunlight blonde at top
+      blondeGrad.addColorStop(0.35, '#ffd60a'); // Radiant golden blonde
+      blondeGrad.addColorStop(0.75, '#ffb703'); // Warm honey blonde
+      blondeGrad.addColorStop(1, '#d48b00');  // Deep blonde contour
+      ctx.fillStyle = blondeGrad;
+
+      // Base forward-leaning blonde wave
       ctx.beginPath();
-      ctx.moveTo(1, -14);
-      ctx.quadraticCurveTo(3, -26, 13, -27); // High pointy front curve
-      ctx.lineTo(18, -25); // Sharp forward-pointing tip!
-      ctx.quadraticCurveTo(12, -19, 14, -13);
-      ctx.lineTo(2, -14);
+      ctx.moveTo(-1, -13);
+      ctx.quadraticCurveTo(2, -26, 11, -27);  // High crest arching forward
+      ctx.quadraticCurveTo(20, -27, 26, -19); // Dramatic forward swoop extending past forehead
+      ctx.lineTo(28, -17);                   // Sharp forward-pointing tip
+      ctx.quadraticCurveTo(20, -15, 14, -12); // Underside returning toward forehead
+      ctx.lineTo(4, -13);
       ctx.closePath();
       ctx.fill();
 
-      // Hair Gloss / Highlight Streak
-      ctx.strokeStyle = '#6c757d';
-      ctx.lineWidth = 1.3;
+      // Upper forward-leaning blonde lock (giving layered volume)
+      ctx.fillStyle = '#fff066';
       ctx.beginPath();
-      ctx.moveTo(4, -23);
-      ctx.quadraticCurveTo(8, -26, 14, -25);
+      ctx.moveTo(3, -22);
+      ctx.quadraticCurveTo(12, -29, 23, -24);
+      ctx.lineTo(27, -18);
+      ctx.quadraticCurveTo(18, -21, 10, -18);
+      ctx.closePath();
+      ctx.fill();
+
+      // Forward-pointing blonde tip accent
+      ctx.fillStyle = '#fff9a6';
+      ctx.beginPath();
+      ctx.moveTo(15, -23);
+      ctx.lineTo(28, -17);
+      ctx.lineTo(20, -16);
+      ctx.closePath();
+      ctx.fill();
+
+      // Combed forward hair texture strands
+      ctx.strokeStyle = 'rgba(180, 115, 0, 0.45)';
+      ctx.lineWidth = 1.1;
+      ctx.lineCap = 'round';
+      ctx.beginPath();
+      ctx.moveTo(2, -18);
+      ctx.quadraticCurveTo(10, -25, 23, -20);
       ctx.stroke();
+
+      ctx.beginPath();
+      ctx.moveTo(5, -14);
+      ctx.quadraticCurveTo(13, -20, 25, -17);
+      ctx.stroke();
+
+      // Sunlight gloss & highlight sheen tracing the forward lean
+      ctx.strokeStyle = '#ffffff';
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.moveTo(6, -24);
+      ctx.quadraticCurveTo(14, -27, 24, -22);
+      ctx.stroke();
+
+      ctx.strokeStyle = '#fff8cc';
+      ctx.lineWidth = 1.0;
+      ctx.beginPath();
+      ctx.moveTo(10, -21);
+      ctx.quadraticCurveTo(18, -23, 26, -19);
+      ctx.stroke();
+
+      // Dark golden perimeter definition
+      ctx.strokeStyle = '#b07d05';
+      ctx.lineWidth = 0.8;
+      ctx.beginPath();
+      ctx.moveTo(-1, -13);
+      ctx.quadraticCurveTo(2, -26, 11, -27);
+      ctx.quadraticCurveTo(20, -27, 26, -19);
+      ctx.lineTo(28, -17);
+      ctx.quadraticCurveTo(20, -15, 14, -12);
+      ctx.stroke();
+      ctx.restore();
 
       // Elegant Orange Bill
       ctx.fillStyle = '#ff7b00';
