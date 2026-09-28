@@ -81,65 +81,46 @@
       </div>
     </div>
 
-    <!-- Canvas Stage -->
-    <div class="canvas-wrapper">
-      <canvas id="gameCanvas" width="900" height="560"></canvas>
+    <!-- Canvas Stage (Dynamically fits canvas into available viewport space) -->
+    <div class="canvas-stage" id="canvasStage">
+      <div class="canvas-wrapper" id="canvasWrapper">
+        <canvas id="gameCanvas" width="900" height="560"></canvas>
 
-      <!-- Overlay for Start / Pause / Game Over -->
-      <div id="gameOverlay" class="game-overlay">
-        <div class="overlay-card" id="overlayCard">
-          <div id="overlayDuck" class="overlay-mascot">🦆</div>
-          <h2 id="overlayTitle">Duck Ping Pong</h2>
-          <p id="overlayMessage">Bounce the duck across the pond! Don't let it slip past your paddle.</p>
+        <!-- Overlay for Start / Pause / Game Over -->
+        <div id="gameOverlay" class="game-overlay">
+          <div class="overlay-card" id="overlayCard">
+            <div id="overlayDuck" class="overlay-mascot">🦆</div>
+            <h2 id="overlayTitle">Duck Ping Pong</h2>
+            <p id="overlayMessage">Bounce the duck across the pond! Don't let it slip past your paddle.</p>
 
-          <!-- Round Result Breakdown (Visible after matches) -->
-          <div id="resultBreakdown" class="result-breakdown hidden">
-            <div class="breakdown-row">
-              <span>Match Result:</span>
-              <strong id="breakdownScore">7 - 3</strong>
+            <!-- Round Result Breakdown (Visible after matches) -->
+            <div id="resultBreakdown" class="result-breakdown hidden">
+              <div class="breakdown-row">
+                <span>Match Result:</span>
+                <strong id="breakdownScore">7 - 3</strong>
+              </div>
+              <div class="breakdown-row">
+                <span>Score Margin:</span>
+                <strong id="breakdownMargin">+4 points</strong>
+              </div>
+              <div class="breakdown-row highlight">
+                <span>Points Earned / Lost:</span>
+                <strong id="breakdownPointsDelta" class="points-gain">+75 ⭐</strong>
+              </div>
+              <div class="breakdown-row">
+                <span>New Total:</span>
+                <strong id="breakdownNewTotal">175 ⭐</strong>
+              </div>
             </div>
-            <div class="breakdown-row">
-              <span>Score Margin:</span>
-              <strong id="breakdownMargin">+4 points</strong>
-            </div>
-            <div class="breakdown-row highlight">
-              <span>Points Earned / Lost:</span>
-              <strong id="breakdownPointsDelta" class="points-gain">+75 ⭐</strong>
-            </div>
-            <div class="breakdown-row">
-              <span>New Total:</span>
-              <strong id="breakdownNewTotal">175 ⭐</strong>
-            </div>
-          </div>
 
-          <div class="tips-box" id="tipsBox">
-            <p><strong>Controls:</strong> Move Mouse or Touch & Drag, or use <strong>W/S</strong> / <strong>↑/↓</strong> Arrow Keys</p>
-          </div>
-          <div class="overlay-actions">
-            <button id="actionBtn" class="btn btn-primary">Start</button>
-            <button id="overlayRestartBtn" class="btn btn-secondary hidden" title="Restart Game (R)">🔄 Restart</button>
-          </div>
-        </div>
-      </div>
-
-      <!-- Duck Skins Selector Modal -->
-      <div id="skinsModal" class="game-overlay hidden">
-        <div class="overlay-card skins-card">
-          <div class="skins-modal-header">
-            <h2>🎨 Duck Wardrobe</h2>
-            <p>Earn points each round to unlock rare and legendary duck skins!</p>
-            <div class="skins-current-points">
-              <span>Your Points:</span>
-              <strong id="skinsModalPoints">100 ⭐</strong>
+            <div class="tips-box" id="tipsBox">
+              <p><strong>Controls:</strong> Move Mouse or Touch & Drag, or use <strong>W/S</strong> / <strong>↑/↓</strong> Arrow Keys</p>
+            </div>
+            <div class="overlay-actions">
+              <button id="actionBtn" class="btn btn-primary">Start</button>
+              <button id="overlayRestartBtn" class="btn btn-secondary hidden" title="Restart Game (R)">🔄 Restart</button>
             </div>
           </div>
-
-          <!-- Grid of Duck Skins -->
-          <div class="skins-grid" id="skinsGrid">
-            <!-- Dynamically populated by game.js -->
-          </div>
-
-          <button id="closeSkinsBtn" class="btn btn-secondary">Back to Game</button>
         </div>
       </div>
     </div>
@@ -152,6 +133,35 @@
       <div class="instruction-tag">🔄 <span><strong>R</strong> to restart</span></div>
       <div class="instruction-tag">🦆 <span>Unlock all 8 duck skins</span></div>
     </footer>
+  </div>
+
+  <!-- Duck Skins Selector Modal (Full-Screen Backdrop, Never Clipped) -->
+  <div id="skinsModal" class="skins-modal-backdrop hidden" aria-modal="true" role="dialog">
+    <div class="overlay-card skins-card" id="skinsCard">
+      <!-- Quick Exit '✕' Button (Top-Right) -->
+      <button id="closeSkinsXBtn" class="btn-close-x" title="Close Wardrobe (Esc)">✕</button>
+
+      <div class="skins-modal-header">
+        <h2>🎨 Duck Wardrobe</h2>
+        <p>Earn points each round to unlock rare and legendary duck skins!</p>
+        <div class="skins-current-points">
+          <span>Your Points:</span>
+          <strong id="skinsModalPoints">100 ⭐</strong>
+        </div>
+      </div>
+
+      <!-- Scrollable Grid Container -->
+      <div class="skins-grid-wrapper">
+        <div class="skins-grid" id="skinsGrid">
+          <!-- Dynamically populated by game.js -->
+        </div>
+      </div>
+
+      <!-- Sticky Modal Footer -->
+      <div class="skins-modal-footer">
+        <button id="closeSkinsBtn" class="btn btn-secondary">Back to Game</button>
+      </div>
+    </div>
   </div>
 
   <script src="game.js"></script>

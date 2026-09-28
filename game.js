@@ -1739,7 +1739,10 @@
       this.skinsModal = document.getElementById('skinsModal');
       this.skinsGrid = document.getElementById('skinsGrid');
       this.closeSkinsBtn = document.getElementById('closeSkinsBtn');
+      this.closeSkinsXBtn = document.getElementById('closeSkinsXBtn');
       this.skinsModalPoints = document.getElementById('skinsModalPoints');
+      this.canvasStage = document.getElementById('canvasStage');
+      this.canvasWrapper = document.getElementById('canvasWrapper');
 
       // Persistence & State
       this.points = this.loadPoints();
@@ -1996,6 +1999,64 @@
       this.closeSkinsBtn.addEventListener('click', () => {
         this.closeSkins();
       });
+
+      if (this.closeSkinsXBtn) {
+        this.closeSkinsXBtn.addEventListener('click', () => {
+          this.closeSkins();
+        });
+      }
+
+      // Backdrop click closes skins wardrobe modal
+      if (this.skinsModal) {
+        this.skinsModal.addEventListener('click', (e) => {
+          if (e.target === this.skinsModal) {
+            this.closeSkins();
+          }
+        });
+      }
+
+      // Automatic screen warping & resize handler
+      window.addEventListener('resize', () => {
+        this.warpGameToScreen();
+      });
+      window.addEventListener('orientationchange', () => {
+        setTimeout(() => this.warpGameToScreen(), 120);
+      });
+
+      if (window.ResizeObserver && this.canvasStage) {
+        new ResizeObserver(() => {
+          this.warpGameToScreen();
+        }).observe(this.canvasStage);
+      }
+
+      // Initial warp to fit screen
+      this.warpGameToScreen();
+      requestAnimationFrame(() => this.warpGameToScreen());
+      setTimeout(() => this.warpGameToScreen(), 60);
+    }
+
+    warpGameToScreen() {
+      if (!this.canvasStage || !this.canvasWrapper) {
+        this.canvasStage = document.getElementById('canvasStage') || document.querySelector('.canvas-stage');
+        this.canvasWrapper = document.getElementById('canvasWrapper') || document.querySelector('.canvas-wrapper');
+      }
+      if (!this.canvasStage || !this.canvasWrapper) return;
+
+      const stageWidth = this.canvasStage.clientWidth;
+      const stageHeight = this.canvasStage.clientHeight;
+      if (stageWidth <= 0 || stageHeight <= 0) return;
+
+      const targetRatio = CANVAS_WIDTH / CANVAS_HEIGHT; // 900 / 560 = 1.60714
+      let targetW = stageWidth;
+      let targetH = targetW / targetRatio;
+
+      if (targetH > stageHeight) {
+        targetH = stageHeight;
+        targetW = targetH * targetRatio;
+      }
+
+      this.canvasWrapper.style.width = `${Math.floor(targetW)}px`;
+      this.canvasWrapper.style.height = `${Math.floor(targetH)}px`;
     }
 
     setDifficulty(level) {
@@ -2020,6 +2081,7 @@
 
     closeSkins() {
       this.skinsModal.classList.add('hidden');
+      this.warpGameToScreen();
     }
 
     buildSkinsGrid() {
