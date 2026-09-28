@@ -1,7 +1,8 @@
 /**
  * Duck Ping Pong 🦆🏓
  * A retro arcade pond game where you rally a duck against an AI bot paddle.
- * Includes multiple duck skins, persistent points, and margin-based reward system.
+ * Includes multiple duck skins, persistent points, margin-based rewards,
+ * spinning red Evil Ducks entering from the sides, and zero-scroll arrow controls!
  */
 
 (function () {
@@ -146,7 +147,6 @@
       return this.muted;
     }
 
-    // Comical duck quack tailored to skin type
     playQuack(speedMultiplier = 1, soundType = 'classic') {
       if (this.muted) return;
       this.init();
@@ -209,6 +209,70 @@
       osc2.start(now);
       osc.stop(now + 0.24);
       osc2.stop(now + 0.24);
+    }
+
+    // Demonic / Evil pitch-shifted quack
+    playEvilQuack() {
+      if (this.muted) return;
+      this.init();
+      if (!this.ctx) return;
+
+      const now = this.ctx.currentTime;
+      const osc = this.ctx.createOscillator();
+      const osc2 = this.ctx.createOscillator();
+      const filter = this.ctx.createBiquadFilter();
+      const gain = this.ctx.createGain();
+
+      filter.type = 'lowpass';
+      filter.frequency.setValueAtTime(420, now);
+      filter.frequency.exponentialRampToValueAtTime(150, now + 0.25);
+      filter.Q.setValueAtTime(5.0, now);
+
+      osc.type = 'sawtooth';
+      osc.frequency.setValueAtTime(180, now);
+      osc.frequency.exponentialRampToValueAtTime(95, now + 0.22);
+
+      osc2.type = 'square';
+      osc2.frequency.setValueAtTime(185, now);
+      osc2.frequency.exponentialRampToValueAtTime(100, now + 0.22);
+
+      gain.gain.setValueAtTime(0.01, now);
+      gain.gain.linearRampToValueAtTime(0.28, now + 0.03);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.26);
+
+      osc.connect(filter);
+      osc2.connect(filter);
+      filter.connect(gain);
+      gain.connect(this.ctx.destination);
+
+      osc.start(now);
+      osc2.start(now);
+      osc.stop(now + 0.28);
+      osc2.stop(now + 0.28);
+    }
+
+    // Ominous rumble/whoosh as evil duck slowly enters
+    playEvilEntrance() {
+      if (this.muted) return;
+      this.init();
+      if (!this.ctx) return;
+
+      const now = this.ctx.currentTime;
+      const osc = this.ctx.createOscillator();
+      const gain = this.ctx.createGain();
+      osc.type = 'triangle';
+      osc.frequency.setValueAtTime(95, now);
+      osc.frequency.linearRampToValueAtTime(220, now + 0.16);
+      osc.frequency.linearRampToValueAtTime(80, now + 0.38);
+
+      gain.gain.setValueAtTime(0.01, now);
+      gain.gain.linearRampToValueAtTime(0.2, now + 0.08);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.4);
+
+      osc.connect(gain);
+      gain.connect(this.ctx.destination);
+      osc.start(now);
+      osc.stop(now + 0.42);
     }
 
     playPaddleHit() {
@@ -362,8 +426,8 @@
         this.maxRadius = 55;
         this.decay = 0.04;
       } else if (type === 'sparkle') {
-        this.vx = (Math.random() - 0.5) * 2;
-        this.vy = (Math.random() - 0.5) * 2;
+        this.vx = (Math.random() - 0.5) * 2.5;
+        this.vy = (Math.random() - 0.5) * 2.5;
         this.decay = 0.04 + Math.random() * 0.03;
         this.size = 3 + Math.random() * 4;
       } else {
@@ -427,6 +491,156 @@
         ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
         ctx.fill();
       }
+      ctx.restore();
+    }
+  }
+
+  // --- Evil Duck Class (Red & Spinning, slowly entering from sides) ---
+  class EvilDuck {
+    constructor(side) {
+      this.side = side; // 'left' or 'right'
+      this.radius = 18;
+      this.x = side === 'left' ? -25 : CANVAS_WIDTH + 25;
+      this.y = Math.random() * (CANVAS_HEIGHT - 180) + 90;
+
+      // Slowly glides across from the side
+      const baseSpeed = 2.4 + Math.random() * 1.3;
+      this.vx = side === 'left' ? baseSpeed : -baseSpeed;
+      this.vy = (Math.random() - 0.5) * 2.6;
+
+      // Rapid spinning animation!
+      this.rotation = Math.random() * Math.PI * 2;
+      this.spinSpeed = (4.0 + Math.random() * 4.0) * (Math.random() < 0.5 ? 1 : -1);
+      this.wingAngle = 0;
+      this.hitFlash = 0;
+      this.active = true;
+    }
+
+    update(dt) {
+      this.x += this.vx * dt * 60;
+      this.y += this.vy * dt * 60;
+      this.rotation += this.spinSpeed * dt;
+      this.wingAngle = Math.sin(this.rotation * 4);
+
+      // Bounce off top and bottom pond banks
+      const topBank = 22;
+      const bottomBank = CANVAS_HEIGHT - 22;
+      if (this.y - this.radius <= topBank) {
+        this.y = topBank + this.radius;
+        this.vy = Math.abs(this.vy);
+        sfx.playBounce();
+      } else if (this.y + this.radius >= bottomBank) {
+        this.y = bottomBank - this.radius;
+        this.vy = -Math.abs(this.vy);
+        sfx.playBounce();
+      }
+
+      if (this.hitFlash > 0) this.hitFlash -= dt * 4;
+
+      // Exited far off stage
+      if (this.x < -110 || this.x > CANVAS_WIDTH + 110) {
+        this.active = false;
+      }
+    }
+
+    draw(ctx) {
+      ctx.save();
+      ctx.translate(this.x, this.y);
+      // Continuous 360-degree spinning!
+      ctx.rotate(this.rotation);
+
+      // Fiery reddish sinister aura
+      ctx.fillStyle = 'rgba(217, 4, 41, 0.3)';
+      ctx.beginPath();
+      ctx.arc(0, 0, this.radius + 6, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Deep Red/Crimson Body Gradient
+      const bodyGrad = ctx.createRadialGradient(2, -2, 2, 0, 0, 20);
+      bodyGrad.addColorStop(0, '#ff4d6d');
+      bodyGrad.addColorStop(0.5, '#d90429');
+      bodyGrad.addColorStop(1, '#590d22');
+      ctx.fillStyle = this.hitFlash > 0 ? '#ffffff' : bodyGrad;
+      ctx.beginPath();
+      ctx.ellipse(-2, 4, 16, 12, 0, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Spiky fiery dark tail
+      ctx.fillStyle = '#800f2f';
+      ctx.beginPath();
+      ctx.moveTo(-14, 2);
+      ctx.lineTo(-24, -4);
+      ctx.lineTo(-17, 0);
+      ctx.lineTo(-26, 4);
+      ctx.lineTo(-14, 6);
+      ctx.closePath();
+      ctx.fill();
+
+      // Wing (dark red/crimson)
+      ctx.save();
+      ctx.translate(-4, 2);
+      ctx.rotate(this.wingAngle * 0.35);
+      ctx.fillStyle = '#590d22';
+      ctx.beginPath();
+      ctx.ellipse(0, 0, 9, 5, 0.2, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+
+      // Evil Duck Head
+      const headGrad = ctx.createRadialGradient(7, -6, 2, 6, -5, 13);
+      headGrad.addColorStop(0, '#ff758f');
+      headGrad.addColorStop(0.6, '#d90429');
+      headGrad.addColorStop(1, '#370617');
+      ctx.fillStyle = this.hitFlash > 0 ? '#ffffff' : headGrad;
+      ctx.beginPath();
+      ctx.arc(7, -7, 11, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Evil Horns / Fiery Spikes on Head
+      ctx.fillStyle = '#ffb703';
+      ctx.beginPath();
+      ctx.moveTo(3, -16);
+      ctx.lineTo(6, -25);
+      ctx.lineTo(9, -17);
+      ctx.closePath();
+      ctx.fill();
+
+      ctx.beginPath();
+      ctx.moveTo(8, -16);
+      ctx.lineTo(13, -23);
+      ctx.lineTo(14, -15);
+      ctx.closePath();
+      ctx.fill();
+
+      // Sharp Dark Beak
+      ctx.fillStyle = '#1b1b1e';
+      ctx.beginPath();
+      ctx.moveTo(14, -8);
+      ctx.lineTo(26, -5);
+      ctx.lineTo(24, -1);
+      ctx.lineTo(13, -3);
+      ctx.closePath();
+      ctx.fill();
+      ctx.strokeStyle = '#ef233c';
+      ctx.lineWidth = 1;
+      ctx.stroke();
+
+      // Sinister Slanted Evil Eye
+      ctx.fillStyle = '#ffea00';
+      ctx.beginPath();
+      ctx.moveTo(8, -12);
+      ctx.lineTo(14, -9);
+      ctx.lineTo(13, -6);
+      ctx.lineTo(7, -9);
+      ctx.closePath();
+      ctx.fill();
+
+      // Red slit pupil
+      ctx.fillStyle = '#d90429';
+      ctx.beginPath();
+      ctx.arc(11, -8.5, 1.5, 0, Math.PI * 2);
+      ctx.fill();
+
       ctx.restore();
     }
   }
@@ -531,7 +745,6 @@
       ctx.beginPath();
       ctx.roundRect(0, -15, 18, 4.5, 2);
       ctx.fill();
-      // Fluttering knot tails
       ctx.beginPath();
       ctx.moveTo(-2, -13);
       ctx.lineTo(-12, -17);
@@ -556,7 +769,7 @@
       ctx.lineWidth = 1;
       ctx.stroke();
 
-      // Crown Ruby Jewel
+      // Ruby Jewel
       ctx.fillStyle = '#e63946';
       ctx.beginPath();
       ctx.arc(7, -20, 2, 0, Math.PI * 2);
@@ -598,7 +811,6 @@
       ctx.beginPath();
       ctx.roundRect(8, -13, 10, 6, 1.5);
       ctx.fill();
-      // White glare stripe
       ctx.strokeStyle = '#ffffff';
       ctx.lineWidth = 1.2;
       ctx.beginPath();
@@ -652,6 +864,7 @@
       this.skinsBtn = document.getElementById('skinsBtn');
       this.skinUnlockedCountEl = document.getElementById('skinUnlockedCount');
       this.activeSkinNameEl = document.getElementById('activeSkinName');
+      this.evilDuckCountEl = document.getElementById('evilDuckCount');
 
       // Overlay Elements
       this.overlay = document.getElementById('gameOverlay');
@@ -684,6 +897,9 @@
 
       // Objects
       this.particles = [];
+      this.evilDucks = [];
+      this.evilSpawnTimer = 0;
+      this.nextEvilSpawnDelay = 4.0;
       this.time = 0;
 
       // Player Paddle
@@ -708,7 +924,7 @@
         hitFlash: 0
       };
 
-      // Duck
+      // Main Duck
       this.duck = {
         x: CANVAS_WIDTH / 2,
         y: CANVAS_HEIGHT / 2,
@@ -738,7 +954,7 @@
         const val = parseInt(stored, 10);
         return isNaN(val) ? 100 : val;
       }
-      return 100; // Starting rating points
+      return 100;
     }
 
     savePoints() {
@@ -766,7 +982,7 @@
 
       if (pointsDelta !== null) {
         this.pointsBadgeEl.classList.remove('bump');
-        void this.pointsBadgeEl.offsetWidth; // Force reflow
+        void this.pointsBadgeEl.offsetWidth;
         this.pointsBadgeEl.classList.add('bump');
 
         this.pointsChangeAnimEl.className = 'points-change-anim';
@@ -784,7 +1000,6 @@
       const skin = this.getSkin();
       this.activeSkinNameEl.textContent = skin.name;
 
-      // Count unlocked skins
       let unlockedCount = 0;
       const totalSkins = Object.keys(SKINS).length;
       Object.values(SKINS).forEach((s) => {
@@ -793,7 +1008,7 @@
       this.skinUnlockedCountEl.textContent = `${unlockedCount}/${totalSkins}`;
     }
 
-    // --- Events & Inputs ---
+    // --- Events & Inputs (Zero Scroll Glitch) ---
     initEvents() {
       const updateMousePos = (clientY) => {
         const rect = this.canvas.getBoundingClientRect();
@@ -821,7 +1036,12 @@
         }
       });
 
+      // KEYBOARD: Prevent default browser page scrolling on Arrow keys and Space
       window.addEventListener('keydown', (e) => {
+        if (['ArrowUp', 'ArrowDown', 'Space', 'KeyW', 'KeyS'].includes(e.code)) {
+          e.preventDefault();
+        }
+
         if (e.code === 'KeyW' || e.code === 'ArrowUp') {
           this.keys.up = true;
         } else if (e.code === 'KeyS' || e.code === 'ArrowDown') {
@@ -842,6 +1062,9 @@
       });
 
       window.addEventListener('keyup', (e) => {
+        if (['ArrowUp', 'ArrowDown', 'Space', 'KeyW', 'KeyS'].includes(e.code)) {
+          e.preventDefault();
+        }
         if (e.code === 'KeyW' || e.code === 'ArrowUp') {
           this.keys.up = false;
         } else if (e.code === 'KeyS' || e.code === 'ArrowDown') {
@@ -918,7 +1141,6 @@
         const card = document.createElement('div');
         card.className = `skin-item ${isEquipped ? 'equipped' : ''} ${!isUnlocked ? 'locked' : ''}`;
 
-        // Preview Canvas
         const previewCanvas = document.createElement('canvas');
         previewCanvas.width = 100;
         previewCanvas.height = 70;
@@ -926,7 +1148,6 @@
         const pCtx = previewCanvas.getContext('2d');
         renderDuck(pCtx, 50, 40, skin, true, 1, 1, 0);
 
-        // Skin Info
         const nameEl = document.createElement('div');
         nameEl.className = 'skin-name';
         nameEl.textContent = skin.name;
@@ -1017,6 +1238,10 @@
       this.rally = 0;
       this.rallyCountEl.textContent = '0';
       this.spawnWaterSplash(this.duck.x, this.duck.y, 8);
+
+      // Reset evil duck timers for the new rally
+      this.evilSpawnTimer = 0;
+      this.nextEvilSpawnDelay = 3.5;
     }
 
     spawnWaterSplash(x, y, count = 6) {
@@ -1025,27 +1250,31 @@
       }
     }
 
-    spawnFeathers(x, y, count = 4) {
+    spawnFeathers(x, y, count = 4, color = null) {
       const skin = this.getSkin();
+      const featherColor = color || skin.particleColor;
       for (let i = 0; i < count; i++) {
-        this.particles.push(new Particle(x, y, 'feather', skin.particleColor));
+        this.particles.push(new Particle(x, y, 'feather', featherColor));
       }
-      if (skin.sparkles) {
+      if (skin.sparkles && !color) {
         for (let i = 0; i < 4; i++) {
           this.particles.push(new Particle(x, y, 'sparkle', '#fff3b0'));
         }
       }
     }
 
-    triggerQuackWave(x, y) {
+    triggerQuackWave(x, y, color = null) {
       const skin = this.getSkin();
-      this.particles.push(new Particle(x, y, 'quackWave', skin.particleColor));
+      this.particles.push(new Particle(x, y, 'quackWave', color || skin.particleColor));
     }
 
     updateScoreboard() {
       this.playerScoreEl.textContent = this.playerScore;
       this.botScoreEl.textContent = this.botScore;
       this.rallyCountEl.textContent = this.rally;
+      if (this.evilDuckCountEl) {
+        this.evilDuckCountEl.textContent = `${this.evilDucks.length} Evil`;
+      }
     }
 
     // --- End Match & Point Calculation based on Margin ---
@@ -1055,18 +1284,15 @@
         const won = this.playerScore >= WINNING_SCORE;
         sfx.playFanfare(won);
 
-        // Margin calculation
         const scoreDifference = this.playerScore - this.botScore;
         let pointsDelta = 0;
 
         if (won) {
-          // Margin is positive (e.g. 7 - 0 = +7 margin, 7 - 5 = +2 margin)
           const baseWin = 25;
           const marginBonus = scoreDifference * 15;
           const diffMult = this.difficulty === 'hard' ? 2.0 : (this.difficulty === 'medium' ? 1.5 : 1.0);
           pointsDelta = Math.round((baseWin + marginBonus) * diffMult);
         } else {
-          // Margin is negative deficit (e.g. 7 - 6 = 1 deficit, 7 - 0 = 7 deficit)
           const deficit = Math.abs(scoreDifference);
           const baseLoss = 15;
           const marginPenalty = deficit * 8;
@@ -1080,7 +1306,6 @@
         this.updatePointsUI(pointsDelta);
         this.updateSkinBadge();
 
-        // Check if any new skins were unlocked
         let newlyUnlocked = [];
         Object.values(SKINS).forEach((skin) => {
           if (oldPoints < skin.unlockPoints && this.points >= skin.unlockPoints) {
@@ -1088,7 +1313,6 @@
           }
         });
 
-        // Setup Result Breakdown Dialog
         this.overlayTitle.textContent = won ? '🏆 Victory on the Pond!' : '🦆 Quacked Out!';
         this.overlayDuck.textContent = won ? '🥇' : '😵';
 
@@ -1102,7 +1326,6 @@
         }
         this.overlayMsg.innerHTML = msg;
 
-        // Populate breakdown table
         this.breakdownScore.textContent = `${this.playerScore} - ${this.botScore}`;
         this.breakdownMargin.textContent = won
           ? `Won by +${scoreDifference} point${scoreDifference > 1 ? 's' : ''}`
@@ -1116,6 +1339,10 @@
         this.tipsBox.classList.add('hidden');
         this.actionBtn.textContent = 'Play Again';
         this.overlay.classList.remove('hidden');
+
+        // Clear evil ducks on match end
+        this.evilDucks = [];
+        this.updateScoreboard();
         return true;
       }
       return false;
@@ -1169,7 +1396,7 @@
       }
       this.bot.y = Math.max(10, Math.min(CANVAS_HEIGHT - this.bot.height - 10, this.bot.y));
 
-      // 3. Duck Physics
+      // 3. Main Duck Physics
       this.duck.x += this.duck.vx;
       this.duck.y += this.duck.vy;
 
@@ -1177,13 +1404,12 @@
       this.duck.squishX += (1 - this.duck.squishX) * 0.15;
       this.duck.squishY += (1 - this.duck.squishY) * 0.15;
 
-      // Golden or Cyber duck occasional particle emit
       const skin = this.getSkin();
       if ((skin.sparkles || skin.visor) && Math.random() < 0.25) {
         this.particles.push(new Particle(this.duck.x, this.duck.y, 'sparkle', skin.particleColor));
       }
 
-      // Wall bounces
+      // Main Duck Wall bounces
       const topBank = 22;
       const bottomBank = CANVAS_HEIGHT - 22;
       if (this.duck.y - this.duck.radius <= topBank) {
@@ -1202,7 +1428,7 @@
         this.spawnWaterSplash(this.duck.x, this.duck.y, 4);
       }
 
-      // Paddle Collision: Player
+      // 4. Main Duck Paddle Collision: Player
       const pRight = this.player.x + this.player.width;
       const pTop = this.player.y;
       const pBottom = this.player.y + this.player.height;
@@ -1217,7 +1443,7 @@
         this.handlePaddleHit(this.player, 1);
       }
 
-      // Paddle Collision: Bot
+      // Main Duck Paddle Collision: Bot
       const bLeft = this.bot.x;
       const bTop = this.bot.y;
       const bBottom = this.bot.y + this.bot.height;
@@ -1232,7 +1458,133 @@
         this.handlePaddleHit(this.bot, -1);
       }
 
-      // Scoring
+      // 5. EVIL DUCKS: Spawn slowly from the sides!
+      this.evilSpawnTimer += dt;
+      if (this.evilSpawnTimer >= this.nextEvilSpawnDelay && this.evilDucks.length < 4) {
+        this.evilSpawnTimer = 0;
+        this.nextEvilSpawnDelay = 5.0 + Math.random() * 3.5; // Next duck in 5-8.5 seconds
+        const side = Math.random() < 0.5 ? 'left' : 'right';
+        const evil = new EvilDuck(side);
+        this.evilDucks.push(evil);
+        sfx.playEvilEntrance();
+        this.spawnWaterSplash(evil.x, evil.y, 6);
+        this.updateScoreboard();
+      }
+
+      // 6. EVIL DUCKS: Update, Collisions & Interactions
+      for (let i = 0; i < this.evilDucks.length; i++) {
+        const evil = this.evilDucks[i];
+        evil.update(dt);
+
+        // Small red smoke trail
+        if (Math.random() < 0.25) {
+          this.particles.push(new Particle(evil.x, evil.y, 'sparkle', '#ef233c'));
+        }
+
+        // A. Evil Duck vs Player Paddle
+        if (
+          evil.vx < 0 &&
+          evil.x - evil.radius <= pRight &&
+          evil.x + evil.radius >= this.player.x &&
+          evil.y >= pTop - 10 &&
+          evil.y <= pBottom + 10
+        ) {
+          // Deflect evil duck back toward bot side!
+          evil.vx = Math.abs(evil.vx) * 1.1 + 0.4;
+          const hitOffset = (evil.y - (this.player.y + this.player.height / 2)) / (this.player.height / 2);
+          evil.vy += hitOffset * 2.5;
+          evil.hitFlash = 1.0;
+          this.player.hitFlash = 1.0;
+
+          sfx.playPaddleHit();
+          sfx.playEvilQuack();
+          this.triggerQuackWave(evil.x, evil.y, '#ef233c');
+          this.spawnFeathers(evil.x, evil.y, 4, '#ef233c');
+
+          // Deflection bonus points!
+          this.points += 5;
+          this.updatePointsUI(5);
+        }
+
+        // B. Evil Duck vs Bot Paddle
+        if (
+          evil.vx > 0 &&
+          evil.x + evil.radius >= bLeft &&
+          evil.x - evil.radius <= bLeft + this.bot.width &&
+          evil.y >= bTop - 10 &&
+          evil.y <= bBottom + 10
+        ) {
+          // Bot deflects evil duck back!
+          evil.vx = -Math.abs(evil.vx) * 1.1 - 0.4;
+          const hitOffset = (evil.y - (this.bot.y + this.bot.height / 2)) / (this.bot.height / 2);
+          evil.vy += hitOffset * 2.5;
+          evil.hitFlash = 1.0;
+          this.bot.hitFlash = 1.0;
+
+          sfx.playPaddleHit();
+          sfx.playEvilQuack();
+          this.spawnFeathers(evil.x, evil.y, 4, '#ef233c');
+        }
+
+        // C. Evil Duck vs Main Duck Mid-Air Collision!
+        const dx = this.duck.x - evil.x;
+        const dy = this.duck.y - evil.y;
+        const dist = Math.hypot(dx, dy);
+        const minDist = this.duck.radius + evil.radius;
+
+        if (dist < minDist && dist > 0) {
+          const nx = dx / dist;
+          const ny = dy / dist;
+
+          // Push apart to prevent overlap
+          const overlap = minDist - dist;
+          this.duck.x += nx * overlap * 0.5;
+          this.duck.y += ny * overlap * 0.5;
+          evil.x -= nx * overlap * 0.5;
+          evil.y -= ny * overlap * 0.5;
+
+          // Elastic bounce swap
+          const kx = this.duck.vx - evil.vx;
+          const ky = this.duck.vy - evil.vy;
+          const p = 2 * (nx * kx + ny * ky) / 2;
+
+          this.duck.vx -= p * nx * 0.85;
+          this.duck.vy -= p * ny * 0.85;
+          evil.vx += p * nx * 0.85;
+          evil.vy += p * ny * 0.85;
+
+          this.duck.facingRight = this.duck.vx > 0;
+          evil.hitFlash = 1.0;
+          this.duck.squishX = 0.7;
+          this.duck.squishY = 1.3;
+
+          sfx.playPaddleHit();
+          sfx.playEvilQuack();
+          sfx.playQuack(1.0, this.getSkin().soundType);
+          this.triggerQuackWave(this.duck.x, this.duck.y, '#ffd166');
+          this.triggerQuackWave(evil.x, evil.y, '#ef233c');
+          this.spawnFeathers(evil.x, evil.y, 5, '#ef233c');
+        }
+
+        // D. Out of bounds check: if hit past bot, award banish bonus!
+        if (evil.x > CANVAS_WIDTH + 45) {
+          this.points += 15;
+          this.updatePointsUI(15);
+          this.spawnFeathers(CANVAS_WIDTH, evil.y, 6, '#ffd700');
+          evil.active = false;
+        } else if (evil.x < -45) {
+          evil.active = false;
+        }
+      }
+
+      // Remove inactive evil ducks
+      const prevCount = this.evilDucks.length;
+      this.evilDucks = this.evilDucks.filter(e => e.active);
+      if (prevCount !== this.evilDucks.length) {
+        this.updateScoreboard();
+      }
+
+      // 7. Main Duck Scoring
       if (this.duck.x < -40) {
         this.botScore++;
         sfx.playSplash();
@@ -1249,7 +1601,7 @@
         }
       }
 
-      // Update Particles
+      // 8. Update Particles
       for (let i = this.particles.length - 1; i >= 0; i--) {
         if (!this.particles[i].update()) {
           this.particles.splice(i, 1);
@@ -1302,6 +1654,7 @@
       this.drawCenterNet(ctx);
       this.drawParticles(ctx);
       this.drawPaddles(ctx);
+      this.drawEvilDucks(ctx);
       this.drawCurrentDuck(ctx);
     }
 
@@ -1434,6 +1787,12 @@
 
       drawSinglePaddle(this.player, true);
       drawSinglePaddle(this.bot, false);
+    }
+
+    drawEvilDucks(ctx) {
+      for (let i = 0; i < this.evilDucks.length; i++) {
+        this.evilDucks[i].draw(ctx);
+      }
     }
 
     drawCurrentDuck(ctx) {

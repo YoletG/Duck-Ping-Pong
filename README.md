@@ -20,6 +20,15 @@ Each skin features unique colors, custom accessories, distinct quack audio frequ
 
 ---
 
+### 😈 Spinning Red Evil Ducks (Hazard & Bonus System)
+Watch out! As rallies unfold, **fiery crimson Evil Ducks** slowly enter the pond from the left and right sides:
+- **Continuous 360° Spin:** They spin as they glide across the pond, bouncing off top and bottom water banks!
+- **Paddle Deflection:** You can strike evil ducks with your paddle to deflect them toward the bot side (`+5 ⭐ Deflection Bonus`)!
+- **Mid-Air Duck Collisions:** If the main duck collides with a spinning evil duck in mid-air, both bounce violently off each other in an explosion of red and yellow feathers!
+- **Banish Bonus:** Knocking an evil duck past the bot paddle awards a `+15 ⭐ Evil Banish Bonus`!
+
+---
+
 ### ⭐ Margin-Based Points & Rating System
 Your points update after each round based on **how much you win by or lose by**:
 
